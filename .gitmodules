@@ -1,0 +1,3 @@
+[submodule "src_ts/lib"]
+	path = src_ts/lib
+	url = https://github.com/uid01089/js_lib.git
