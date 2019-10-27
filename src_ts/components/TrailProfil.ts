@@ -1,11 +1,10 @@
-//import { LitElement, html } from '@polymer/lit-element';
-import { Component } from '../lib/Component';
+import { Component } from '../js_web_comp_lib/Component';
 import { CSS } from '../Css';
 import { RedTrailProfil } from '../reducers/RedTrailProfil';
 import { reduxStoreInstance } from '../ReduxStore';
-import { LineChart, DataElement, LineChartSerie, ChartDataLine } from '../lib/components/LineChart';
+import { LineChart, DataElement, LineChartSerie, ChartDataLine } from '../lib/components/charts/LineChart';
 import { MAP_MAIN_COMPLETE_DIRECTIONS, MAP_MAIN_DELETE_ALL_MARKERS } from '../reducers/RedMapMain';
-import { DirectionsImpl } from '../lib/MapBox/Directions';
+import { DirectionsImpl } from '../GIS/Directions';
 import { Util } from '../lib/Util';
 
 

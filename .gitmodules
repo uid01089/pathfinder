@@ -1,3 +1,6 @@
 [submodule "src_ts/lib"]
 	path = src_ts/lib
 	url = https://github.com/uid01089/js_lib.git
+[submodule "src_ts/js_web_comp_lib"]
+	path = src_ts/js_web_comp_lib
+	url = https://github.com/uid01089/js_web_comp_lib.git

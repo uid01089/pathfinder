@@ -1,8 +1,9 @@
 
 
-import { AbstractReduxStore } from './lib/AbstractReduxStore';
-import { DirectionsImpl } from './lib/MapBox/Directions';
-import { IMarker, LonLatEle } from './lib/MapBox/MapBoxUtil';
+import { AbstractReduxStore } from './js_web_comp_lib/AbstractReduxStore';
+import { DirectionsImpl } from './GIS/Directions';
+import { LonLatEle } from './GIS/GISUtil';
+import { IMarker } from './GIS/Marker';
 
 
 interface State {

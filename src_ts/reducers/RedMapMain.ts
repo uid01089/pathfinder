@@ -1,12 +1,13 @@
-import { AbstractReducer } from '../lib/AbstractReducer.js';
+import { AbstractReducer } from '../js_web_comp_lib/AbstractReducer';
 import { Action, ActionCreatorsMapObject } from 'redux';
-import { State } from '../ReduxStore';
-import { DirectionsImpl } from '../lib/MapBox/Directions';
-import { MapBoxUtil, IMarker } from '../lib/MapBox/MapBoxUtil';
-import { GpxFile, LonLatEle, Track } from '../lib/MapBox/GpxFile';
-import { Elevation } from '../lib/MapBox/Elevation.js';
+import { State, reduxStoreInstance } from '../ReduxStore';
+import { DirectionsImpl } from '../GIS/Directions';
+import { GISUtil } from '../GIS/GISUtil';
+import { GpxFile, LonLatEle, Track } from '../GIS/GpxFile';
+import { Elevation } from '../GIS/Elevation';
+import { IMarker } from '../GIS/Marker';
 
-const { dialog } = require('electron').remote;
+
 
 const MAP_MAIN_OPEN_GPX_FILE = "MAP_MAIN_OPEN_GPX_FILE";
 const MAP_MAIN_SAVE_GPX_FILE = "MAP_MAIN_SAVE_GPX_FILE";
@@ -26,7 +27,7 @@ interface ActionSetCenter extends Action {
     center: LonLatEle;
 }
 interface ActionOpenGpxFile extends Action {
-    path: string
+    files: FileList
 }
 interface ActionSaveGpxFile extends Action {
 
@@ -58,8 +59,8 @@ interface ActionCompleteDirection extends Action {
     directions: DirectionsImpl
 }
 
-class RedMapMain extends AbstractReducer {
-    private mapBoxUtil: MapBoxUtil;
+class RedMapMain extends AbstractReducer<State> {
+    private mapBoxUtil: GISUtil;
 
 
 
@@ -69,9 +70,9 @@ class RedMapMain extends AbstractReducer {
 
 
     constructor() {
-        super();
+        super(reduxStoreInstance);
 
-        this.mapBoxUtil = new MapBoxUtil();
+        this.mapBoxUtil = new GISUtil();
 
     }
 
@@ -84,27 +85,29 @@ class RedMapMain extends AbstractReducer {
                 {
                     var actionReadIn: ActionOpenGpxFile = action as ActionOpenGpxFile;
 
-                    var path = actionReadIn.path;
-                    var gpxFilePromise = GpxFile.load(path);
+                    var files = actionReadIn.files;
 
-                    gpxFilePromise.then((gpxFile) => {
-                        var tracks = gpxFile.getTrks();
+                    Array.from(files).forEach((file) => {
 
 
+                        var gpxFilePromise = GpxFile.load(file);
 
-                        // Add a direction with values from track 0
-                        this.setDirectionsByTrack(tracks[0]);
-
-                        // Set Map center to the first marker
-                        this.setCenter(tracks[0].lonLatEles[0]);
+                        gpxFilePromise.then((gpxFile) => {
+                            var tracks = gpxFile.getTrks();
 
 
-                    }).catch((error) => {
-                        console.warn(error);
+
+                            // Add a direction with values from track 0
+                            this.setDirectionsByTrack(tracks[0]);
+
+                            // Set Map center to the first marker
+                            this.setCenter(tracks[0].lonLatEles[0]);
+
+
+                        }).catch((error) => {
+                            console.warn(error);
+                        })
                     })
-
-
-
 
 
                     var newState = Object.assign({}, state, {
@@ -257,7 +260,15 @@ class RedMapMain extends AbstractReducer {
     }
 
 
-    openGpxFile() {
+    openGpxFile(files: FileList) {
+
+
+        const action: ActionOpenGpxFile = {
+            type: MAP_MAIN_OPEN_GPX_FILE,
+            files: files
+        }
+        this.store.dispatch(action);
+
 
         const options = {
             //title: 'Open a file or folder',
@@ -270,6 +281,8 @@ class RedMapMain extends AbstractReducer {
             //message: 'This message will only be shown on macOS'
         };
 
+
+        /*
         dialog.showOpenDialog(null, options, (fileNames) => {
 
             if (typeof fileNames !== 'undefined') {
@@ -280,18 +293,19 @@ class RedMapMain extends AbstractReducer {
                         type: MAP_MAIN_OPEN_GPX_FILE,
                         path: fileNames[0]
                     }
-                    this._store.dispatch(action);
+                    this.store.dispatch(action);
                 }
             }
         }
         );
+        */
 
     }
     saveGpxFile() {
         const action: ActionSaveGpxFile = {
             type: MAP_MAIN_SAVE_GPX_FILE
         }
-        this._store.dispatch(action);
+        this.store.dispatch(action);
     }
 
 
@@ -300,7 +314,7 @@ class RedMapMain extends AbstractReducer {
             type: MAP_MAIN_ADD_MARKER,
             marker: markerToBeAdded
         }
-        this._store.dispatch(action);
+        this.store.dispatch(action);
     }
 
     changeMarker(index: number, marker: IMarker) {
@@ -309,7 +323,7 @@ class RedMapMain extends AbstractReducer {
             marker: marker,
             index: index
         }
-        this._store.dispatch(action);
+        this.store.dispatch(action);
     }
 
     deleteMarker(index: number, markerToBeDeleted: IMarker) {
@@ -318,7 +332,7 @@ class RedMapMain extends AbstractReducer {
             marker: markerToBeDeleted,
             index: index
         }
-        this._store.dispatch(action);
+        this.store.dispatch(action);
     }
 
     setDirectionsByTrack(track: Track) {
@@ -338,7 +352,7 @@ class RedMapMain extends AbstractReducer {
                 })
             );
         }
-        this._store.dispatch(actionFct);
+        this.store.dispatch(actionFct);
 
     }
 
@@ -356,7 +370,7 @@ class RedMapMain extends AbstractReducer {
             })
 
         }
-        this._store.dispatch(actionFct);
+        this.store.dispatch(actionFct);
     }
 
     setDirectionsByMarkers(markers: IMarker[], autoRouting: boolean, accessToken: string) {
@@ -395,7 +409,7 @@ class RedMapMain extends AbstractReducer {
 
             }
         }
-        this._store.dispatch(actionFct);
+        this.store.dispatch(actionFct);
     }
 
     delAllMarkers() {
@@ -407,7 +421,7 @@ class RedMapMain extends AbstractReducer {
             // Force to be asynchron
             setTimeout(() => { dispatch(action); }, 1); // Works flawlessly
         }
-        this._store.dispatch(actionFct);
+        this.store.dispatch(actionFct);
     }
 
     setCenter(center: LonLatEle) {
@@ -420,14 +434,14 @@ class RedMapMain extends AbstractReducer {
             // Force to be asynchron
             setTimeout(() => { dispatch(action); }, 1); // Works flawlessly
         }
-        this._store.dispatch(actionFct);
+        this.store.dispatch(actionFct);
     }
 
     toggleAutoRoute() {
         const action: ActionToggleAutoRoute = {
             type: MAP_MAIN_TOGGLE_AUTO_ROUTE
         };
-        this._store.dispatch(action);
+        this.store.dispatch(action);
     }
 
 

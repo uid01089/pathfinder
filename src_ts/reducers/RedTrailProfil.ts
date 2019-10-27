@@ -1,11 +1,11 @@
-import { AbstractReducer } from '../lib/AbstractReducer.js';
+import { AbstractReducer } from '../js_web_comp_lib/AbstractReducer.js';
 import { Action } from 'redux';
-import { State } from '../ReduxStore';
+import { State, reduxStoreInstance } from '../ReduxStore';
 
 
-class RedTrailProfil extends AbstractReducer {
+class RedTrailProfil extends AbstractReducer<State> {
     constructor() {
-        super();
+        super(reduxStoreInstance);
     }
     reducer(state: State, action: Action): State {
 

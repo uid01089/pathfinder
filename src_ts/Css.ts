@@ -1,4 +1,4 @@
-import { Component } from './lib/Component'
+import { Component } from './js_web_comp_lib/Component'
 
 const CSS = Component.html` 
         <style>

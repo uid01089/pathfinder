@@ -1,8 +1,8 @@
 
+import { Component } from '../js_web_comp_lib/Component';
 
-import { Component } from '../lib/Component';
 import { CSS } from '../Css';
-import './MapMain';
+import './LeafMapMain';
 
 
 
@@ -29,7 +29,7 @@ class P3ElectronApp extends Component {
 
         </style>
 
-        <map-main></map-main>
+        <leaf-map-main></leaf-map-main>
 
 
 
