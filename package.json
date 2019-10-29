@@ -2,6 +2,7 @@
   "name": "p3-electron",
   "main": "main.js",
   "scripts": {
+    "start_webpack": "webpack-dev-server --mode development",
     "start": "electron .",
     "build": "tsc --build tsconfig.json",
     "webpack": "webpack --mode development"
@@ -17,18 +18,31 @@
     "redux": "^4.0.4",
     "redux-thunk": "^2.3.0",
     "simple-git": "^1.124.0",
+    "stream": "0.0.2",
+    "timers": "^0.1.1",
     "xml2js": "^0.4.19"
   },
   "devDependencies": {
+    "@babel/core": "^7.6.4",
+    "@babel/plugin-syntax-object-rest-spread": "^7.2.0",
+    "@babel/preset-env": "^7.6.3",
+    "@open-wc/building-webpack": "^2.7.3",
     "@types/mapbox-gl": "^0.54.1",
+    "babel-loader": "^8.0.6",
+    "clean-webpack-plugin": "^3.0.0",
+    "copy-webpack-plugin": "^5.0.4",
     "css-loader": "^3.2.0",
     "electron": "^6.0.12",
     "file-loader": "^4.2.0",
     "html-webpack-plugin": "^3.2.0",
+    "ssh-webpack-plugin": "^0.1.7",
     "style-loader": "^1.0.0",
-    "subpackage": "^1.1.0",
+    "text-loader": "0.0.1",
+    "ts-loader": "^6.2.0",
+    "typescript": "^3.6.4",
     "typescript-tslint-plugin": "^0.3.1",
     "webpack": "^4.41.0",
-    "webpack-cli": "^3.3.9"
+    "webpack-cli": "^3.3.9",
+    "webpack-dev-server": "^3.8.2"
   }
 }

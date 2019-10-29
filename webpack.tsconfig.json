@@ -2,15 +2,11 @@
     "compilerOptions": {
         "target": "es6",
         "module": "commonjs",
-        "sourceMap": true,
-        "outDir": "./src",
-        "strict": false,
-        "rootDir": "./src_ts"
+        "sourceMap": true
     },
     "exclude": [
         "node_modules",
         "build",
-        "dist",
-        "webpack.render.ts"
+        "dist"
     ]
 }

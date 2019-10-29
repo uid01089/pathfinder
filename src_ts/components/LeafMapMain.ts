@@ -20,7 +20,11 @@ import { Overpass } from '../GIS/Overpass';
 import { IMarker } from '../GIS/Marker';
 import { FileDialog, FileDialogResult } from '../lib/components/FileDialog'
 import '../lib/components/FileDialog';
-import * as GEO from 'leaflet-control-geocoder'
+import * as GEO from 'leaflet-control-geocoder';
+import { LeafletCss } from './Leaflet.css';
+
+
+
 
 
 
@@ -35,243 +39,250 @@ class LeafMapMain extends Component {
 
 
 
-    markers: Array<Marker>;
-    geojson: FeatureCollection;
-    map: Map;
-    _reducer: RedMapMain;
-    reduxListenerUnsubsribe: Function;
-    private mapBoxUtil: GISUtil;
-    geoJsonLayer: L.GeoJSON<any>;
-    waymarkedtrails: TileLayer;
-    showHikingLayer: boolean;
+	markers: Array<Marker>;
+	geojson: FeatureCollection;
+	map: Map;
+	_reducer: RedMapMain;
+	reduxListenerUnsubsribe: Function;
+	private mapBoxUtil: GISUtil;
+	geoJsonLayer: L.GeoJSON<any>;
+	waymarkedtrails: TileLayer;
+	showHikingLayer: boolean;
 
-    constructor() {
-        super();
+	constructor() {
+		super();
 
-        this.markers = new Array();
-        this._reducer = new RedMapMain();
-        reduxStoreInstance.registerReducer(this._reducer);
-        this.reduxListenerUnsubsribe = reduxStoreInstance.subscribe(() => this.reduxtrigger(reduxStoreInstance));
-        this.mapBoxUtil = new GISUtil(ACCESS_TOKEN);
+		this.markers = new Array();
+		this._reducer = new RedMapMain();
+		reduxStoreInstance.registerReducer(this._reducer);
+		this.reduxListenerUnsubsribe = reduxStoreInstance.subscribe(() => this.reduxtrigger(reduxStoreInstance));
+		this.mapBoxUtil = new GISUtil(ACCESS_TOKEN);
 
-        L.Icon.Default.imagePath = 'node_modules/leaflet/dist/images/';
+		L.Icon.Default.imagePath = 'node_modules/leaflet/dist/images/';
 
-        var geojson: FeatureCollection = {
-            "type": "FeatureCollection",
-            "features": [{
-                "type": "Feature",
-                "geometry": {
-                    "type": "LineString",
-                    "coordinates": [
-                        [0, 0]
-                    ]
-                }
-            } as Feature]
-        };
+		var geojson: FeatureCollection = {
+			"type": "FeatureCollection",
+			"features": [{
+				"type": "Feature",
+				"geometry": {
+					"type": "LineString",
+					"coordinates": [
+						[0, 0]
+					]
+				}
+			} as Feature]
+		};
 
-        this.geoJsonLayer = L.geoJSON(geojson);
+		this.geoJsonLayer = L.geoJSON(geojson);
 
-        this.waymarkedtrails = new TileLayer('https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png', {
-            maxZoom: 18,
-            attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>'
-        });
+		this.waymarkedtrails = new TileLayer('https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>'
+		});
 
-        this.showHikingLayer = false;
+		this.showHikingLayer = false;
 
 
 
 
-    }
+	}
 
-    connectedCallback() {
-        super.connectedCallback();
-        console.log('MapMainWindow.');
-        let mapElement = this.shadowRoot.getElementById("map") as HTMLElement;
+	connectedCallback() {
+		super.connectedCallback();
+		console.log('MapMainWindow.');
+		let mapElement = this.shadowRoot.getElementById("map") as HTMLElement;
 
-        this.map = new Map(mapElement, {});
+		this.map = new Map(mapElement, {});
 
 
 
 
-        // set the position and zoom level of the map
-        this.map.setView([49.317390, 12.035533], 9);
+		// set the position and zoom level of the map
+		this.map.setView([49.317390, 12.035533], 9);
 
-        var bounds = this.map.getBounds();
+		var bounds = this.map.getBounds();
 
-        // create a tileLayer with the tiles, attribution
-        var opentopomap = new CachedTileLayer('https://opentopomap.org/{z}/{x}/{y}.png', {
-            maxZoom: 18,
-            attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>'
-        });
+		// create a tileLayer with the tiles, attribution
+		var opentopomap = new CachedTileLayer('https://opentopomap.org/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>'
+		});
 
-        // add the tile layer to the map
-        opentopomap.addTo(this.map);
-        //this.waymarkedtrails.addTo(this.map);
-        this.geoJsonLayer.addTo(this.map);
+		// add the tile layer to the map
+		opentopomap.addTo(this.map);
+		//this.waymarkedtrails.addTo(this.map);
+		this.geoJsonLayer.addTo(this.map);
 
-        // https://maps.dwd.de/geoserver/web/wicket/bookmarkable/org.geoserver.web.demo.MapPreviewPage?0
-        var satelitte = new TileLayer.WMS("https://maps.dwd.de/geoserver/dwd/wms?", {
-            layers: "dwd:SAT_WELT_KOMPOSIT",
-            format: 'image/png',
-            transparent: true,
-            attribution: "Weather data © 2012 IEM Nexrad"
-        });
+		// https://maps.dwd.de/geoserver/web/wicket/bookmarkable/org.geoserver.web.demo.MapPreviewPage?0
+		var satelitte = new TileLayer.WMS("https://maps.dwd.de/geoserver/dwd/wms?", {
+			layers: "dwd:SAT_WELT_KOMPOSIT",
+			format: 'image/png',
+			transparent: true,
+			attribution: "Weather data © 2012 IEM Nexrad"
+		});
 
-        //satelitte.addTo(this.map);
+		//satelitte.addTo(this.map);
 
-        // https://maps.dwd.de/geoserver/web/wicket/bookmarkable/org.geoserver.web.demo.MapPreviewPage?0
-        var radar = new TileLayer.WMS("https://maps.dwd.de/geoserver/dwd/wms?", {
-            layers: "dwd:FX-Produkt",
-            format: 'image/png',
-            transparent: true,
-            attribution: "Weather data © 2012 IEM Nexrad"
-        });
+		// https://maps.dwd.de/geoserver/web/wicket/bookmarkable/org.geoserver.web.demo.MapPreviewPage?0
+		var radar = new TileLayer.WMS("https://maps.dwd.de/geoserver/dwd/wms?", {
+			layers: "dwd:FX-Produkt",
+			format: 'image/png',
+			transparent: true,
+			attribution: "Weather data © 2012 IEM Nexrad"
+		});
 
-        //radar.addTo(this.map);
+		//radar.addTo(this.map);
 
-        var parkingLayer = new Overpass(12, './resources/marker-icon-park.png', 'amenity=parking');
-        //overpass.addTo(this.map);
+		var parkingLayer = new Overpass(12, './resources/marker-icon-park.png', 'amenity=parking');
+		//overpass.addTo(this.map);
 
-        var alpine_hut = new Overpass(12, './resources/marker-icon-park.png', 'tourism=alpine_hut');
+		var alpine_hut = new Overpass(12, './resources/marker-icon-park.png', 'tourism=alpine_hut');
 
-        var wilderness_hut = new Overpass(12, './resources/marker-icon-park.png', 'tourism=wilderness_hut');
+		var wilderness_hut = new Overpass(12, './resources/marker-icon-park.png', 'tourism=wilderness_hut');
 
-        var guest_house = new Overpass(12, './resources/marker-icon-park.png', 'tourism=guest_house');
+		var guest_house = new Overpass(12, './resources/marker-icon-park.png', 'tourism=guest_house');
 
-        var overlayPane = {
-            "Hiking": this.waymarkedtrails,
-            "Satelitte": satelitte,
-            "Radar": radar,
-            "Parking": parkingLayer,
-            "Hütte": alpine_hut,
-            "Hütte1": wilderness_hut,
-            "Gästehaus": guest_house,
-        };
+		var overlayPane = {
+			"Hiking": this.waymarkedtrails,
+			"Satelitte": satelitte,
+			"Radar": radar,
+			"Parking": parkingLayer,
+			"Hütte": alpine_hut,
+			"Hütte1": wilderness_hut,
+			"Gästehaus": guest_house,
+		};
 
-        // Add a layer control element to the map
-        var layerControl = L.control.layers(null, overlayPane);
-        layerControl.addTo(this.map);
+		// Add a layer control element to the map
+		var layerControl = L.control.layers(null, overlayPane);
+		layerControl.addTo(this.map);
 
-        //L.control.geocoder().addTo(this.map);
+		//L.control.geocoder().addTo(this.map);
 
 
 
 
 
-        this.map.on('click', (e) => {
-            var event = e as LeafletMouseEvent
-            var marker = new Marker(event.latlng, {
-                draggable: true
-            });
+		this.map.on('click', (e) => {
+			var event = e as LeafletMouseEvent
+			var marker = new Marker(event.latlng, {
+				draggable: true
+			});
 
-            marker.on('dragend', (e) => {
-                //this.retrieveRoute();
-                this._reducer.changeMarker(this.markers.indexOf(marker), { lonLatEle: [marker.getLatLng().lng, marker.getLatLng().lat] } as IMarker);
-            });
+			marker.on('dragend', (e) => {
+				//this.retrieveRoute();
+				this._reducer.changeMarker(this.markers.indexOf(marker), { lonLatEle: [marker.getLatLng().lng, marker.getLatLng().lat] } as IMarker);
+			});
 
-            // Add it to the marker collection
-            this.markers.push(marker);
-            this._reducer.addMarker({ lonLatEle: [marker.getLatLng().lng, marker.getLatLng().lat] } as IMarker);
+			// Add it to the marker collection
+			this.markers.push(marker);
+			this._reducer.addMarker({ lonLatEle: [marker.getLatLng().lng, marker.getLatLng().lat] } as IMarker);
 
 
-            marker.addTo(this.map);
+			marker.addTo(this.map);
 
-            marker.getElement().addEventListener('contextmenu', (ev) => {
+			marker.getElement().addEventListener('contextmenu', (ev) => {
 
-                let context = this.shadowRoot.getElementById("contextMenuMarker") as ContextMenuProgrammatical;
-                context.showMenuAndRegisterEvents(ev, marker);
-            });
+				let context = this.shadowRoot.getElementById("contextMenuMarker") as ContextMenuProgrammatical;
+				context.showMenuAndRegisterEvents(ev, marker);
+			});
 
-        });
+		});
 
 
-    }
+	}
 
-    registerCallBack() {
+	registerCallBack() {
 
 
 
 
-        let contextHamburgerMenu = this.shadowRoot.getElementById("hamburgerMenu");
-        contextHamburgerMenu.addEventListener('valueSelected', (e: CustomEvent) => {
-            var details: ContextEventResult = e.detail;
+		let contextHamburgerMenu = this.shadowRoot.getElementById("hamburgerMenu");
+		contextHamburgerMenu.addEventListener('valueSelected', (e: CustomEvent) => {
+			var details: ContextEventResult = e.detail;
 
-            console.log(details);
+			console.log(details);
 
-            switch (details.command) {
-                case 'open':
+			switch (details.command) {
+				case 'open':
 
-                    let fileDialog = this.shadowRoot.getElementById("OpenGpxFileDialog") as FileDialog;
-                    fileDialog.show((files) => {
-                        this._reducer.openGpxFile(files);
-                    });
+					let fileDialog = this.shadowRoot.getElementById("OpenGpxFileDialog") as FileDialog;
+					fileDialog.show((files) => {
+						this._reducer.openGpxFile(files);
+					});
 
-                    break;
-                case 'save':
-                    this._reducer.saveGpxFile();
-                    break;
-                case 'delAllMarkers':
-                    this._reducer.delAllMarkers();
-                    break;
-                case 'toggleAutoRoute':
-                    this._reducer.toggleAutoRoute();
-                    break;
-                case 'toggleHikingTracks':
+					break;
+				case 'save':
+					this._reducer.saveGpxFile();
+					break;
+				case 'delAllMarkers':
+					this._reducer.delAllMarkers();
+					break;
+				case 'toggleAutoRoute':
+					this._reducer.toggleAutoRoute();
+					break;
+				case 'toggleHikingTracks':
 
 
-                    if (!this.showHikingLayer) {
-                        this.map.addLayer(this.waymarkedtrails);
-                        this.showHikingLayer = true;
-                    } else {
-                        this.map.removeLayer(this.waymarkedtrails);
-                        this.showHikingLayer = false;
-                    }
-                    break;
+					if (!this.showHikingLayer) {
+						this.map.addLayer(this.waymarkedtrails);
+						this.showHikingLayer = true;
+					} else {
+						this.map.removeLayer(this.waymarkedtrails);
+						this.showHikingLayer = false;
+					}
+					break;
 
-                default:
-                    break;
-            }
-        });
+				default:
+					break;
+			}
+		});
 
-        let contextMarkerMenu = this.shadowRoot.getElementById("contextMenuMarker");
-        contextMarkerMenu.addEventListener('valueSelected', (e: CustomEvent) => {
-            var details: ContextEventResult = e.detail;
+		let contextMarkerMenu = this.shadowRoot.getElementById("contextMenuMarker");
+		contextMarkerMenu.addEventListener('valueSelected', (e: CustomEvent) => {
+			var details: ContextEventResult = e.detail;
 
-            switch (details.command) {
-                case 'delete':
-                    var marker: Marker = details.ident;
+			switch (details.command) {
+				case 'delete':
+					var marker: Marker = details.ident;
 
-                    var index = this.markers.indexOf(details.ident);
-                    this._reducer.deleteMarker(index, { lonLatEle: [marker.getLatLng().lng, marker.getLatLng().lat] } as IMarker);
+					var index = this.markers.indexOf(details.ident);
+					this._reducer.deleteMarker(index, { lonLatEle: [marker.getLatLng().lng, marker.getLatLng().lat] } as IMarker);
 
-                    var index = this.markers.indexOf(details.ident);
-                    if (index > -1) {
-                        (details.ident as Marker).remove();
-                        this.markers.splice(index, 1);
-                        //this.retrieveRoute();
-                    }
-                    break;
-                case 'move':
+					var index = this.markers.indexOf(details.ident);
+					if (index > -1) {
+						(details.ident as Marker).remove();
+						this.markers.splice(index, 1);
+						//this.retrieveRoute();
+					}
+					break;
+				case 'move':
 
 
-                    break;
+					break;
 
-                default:
-                    break;
-            }
+				default:
+					break;
+			}
 
 
-        });
-    }
+		});
+	}
 
-    getHTML() {
+	getHTML() {
 
-        return Component.html` 
+
+
+
+		return Component.html` 
+        
         ${CSS}
 
-        <link rel="stylesheet" href="../../node_modules/leaflet/dist/leaflet.css">
-        
+		<!--link rel="stylesheet" href="../../node_modules/leaflet/dist/leaflet.css"-->
+		${LeafletCss}
+
         <style>
+            
+            
             body { margin:0; padding:0; }
             #map { position:absolute; top:0; bottom:0; width:100%; z-index: 0;}
         </style>
@@ -292,71 +303,71 @@ class LeafMapMain extends Component {
         <file-dialog id="OpenGpxFileDialog"></file-dialog>
 
         `;
-    }
+	}
 
 
-    reduxtrigger(storeInstance) {
+	reduxtrigger(storeInstance) {
 
-        if (!this.isConnected) {
-            this.reduxListenerUnsubsribe();
-        }
+		if (!this.isConnected) {
+			this.reduxListenerUnsubsribe();
+		}
 
-        switch (storeInstance.getState().action) {
+		switch (storeInstance.getState().action) {
 
-            case MAP_MAIN_OPEN_GPX_FILE:
-                console.log("- open gpx");
+			case MAP_MAIN_OPEN_GPX_FILE:
+				console.log("- open gpx");
 
-                // Delete all markers. The markers are repopulated later by consecutive actions
-                this.markers.forEach((marker) => {
-                    marker.remove()
-                })
-                this.markers = [];
-                break;
-            case MAP_MAIN_SAVE_GPX_FILE:
-                console.log("- save gpx");
-                break;
-            case MAP_MAIN_SET_DIRECTIONS:
-                console.log("- set directions");
-                var directions: DirectionsImpl = storeInstance.getState().directions;
-                // then update the map
-                this.geoJsonLayer.clearLayers();
-                this.geoJsonLayer.addData(FeatureCollectionImpl.getFeatureCollection(directions));
+				// Delete all markers. The markers are repopulated later by consecutive actions
+				this.markers.forEach((marker) => {
+					marker.remove()
+				})
+				this.markers = [];
+				break;
+			case MAP_MAIN_SAVE_GPX_FILE:
+				console.log("- save gpx");
+				break;
+			case MAP_MAIN_SET_DIRECTIONS:
+				console.log("- set directions");
+				var directions: DirectionsImpl = storeInstance.getState().directions;
+				// then update the map
+				this.geoJsonLayer.clearLayers();
+				this.geoJsonLayer.addData(FeatureCollectionImpl.getFeatureCollection(directions));
 
-                break;
-            case MAP_MAIN_ADD_MARKER:
-                console.log("- add marker");
-                break;
-            case MAP_MAIN_DELETE_MARKER:
-                console.log("- delete marker");
-                break;
-            case MAP_MAIN_CHANGE_MARKER:
-                console.log("- change marker");
-                break;
-            case MAP_MAIN_COMPLETE_DIRECTIONS:
-                console.log("- complete direction");
-                break;
-            case MAP_MAIN_DELETE_ALL_MARKERS:
-                console.log("- delete all marker");
+				break;
+			case MAP_MAIN_ADD_MARKER:
+				console.log("- add marker");
+				break;
+			case MAP_MAIN_DELETE_MARKER:
+				console.log("- delete marker");
+				break;
+			case MAP_MAIN_CHANGE_MARKER:
+				console.log("- change marker");
+				break;
+			case MAP_MAIN_COMPLETE_DIRECTIONS:
+				console.log("- complete direction");
+				break;
+			case MAP_MAIN_DELETE_ALL_MARKERS:
+				console.log("- delete all marker");
 
-                this.markers.forEach((marker) => {
-                    marker.remove()
+				this.markers.forEach((marker) => {
+					marker.remove()
 
-                })
+				})
 
-                this.markers = [];
+				this.markers = [];
 
 
-                break;
-            case MAP_MAIN_SET_CENTER:
-                console.log("- set center");
-                this.map.flyTo([storeInstance.getState().center[1], storeInstance.getState().center[0]], 9);
+				break;
+			case MAP_MAIN_SET_CENTER:
+				console.log("- set center");
+				this.map.flyTo([storeInstance.getState().center[1], storeInstance.getState().center[0]], 9);
 
-                break;
+				break;
 
-            default:
-                break;
-        }
-    }
+			default:
+				break;
+		}
+	}
 
 
 
