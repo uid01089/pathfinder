@@ -22,6 +22,7 @@ import { FileDialog, FileDialogResult } from '../lib/components/FileDialog'
 import '../lib/components/FileDialog';
 import * as GEO from 'leaflet-control-geocoder';
 import { LeafletCss } from './Leaflet.css';
+import { MidiWindow } from '../lib/components/MidiWindow';
 
 
 
@@ -232,6 +233,11 @@ class LeafMapMain extends Component {
 					}
 					break;
 
+				case 'showProfile':
+					let profileWindow = this.shadowRoot.getElementById("ProfileWindow") as MidiWindow;
+					profileWindow.show();
+
+
 				default:
 					break;
 			}
@@ -291,12 +297,12 @@ class LeafMapMain extends Component {
         <div id='map'></div>
 
         <!-- Hamburger menu -->
-        <hamburger-menu-hide menu-entries={"Open%20gpx-file":"open","Save%20as%20gpx-file":"save","Delete%20all%20markers":"delAllMarkers","Switch%20on/off%20autoroute":"toggleAutoRoute","Switch%20on/off%20hiking%20tracks":"toggleHikingTracks"} ident="" id="hamburgerMenu"></hamburger-menu-hide>
+        <hamburger-menu-hide menu-entries={"Open%20gpx-file":"open","Save%20as%20gpx-file":"save","Delete%20all%20markers":"delAllMarkers","Switch%20on/off%20autoroute":"toggleAutoRoute","Switch%20on/off%20hiking%20tracks":"toggleHikingTracks","Show%20profile":"showProfile"} ident="" id="hamburgerMenu"></hamburger-menu-hide>
         
         <!-- Context menu for the markers -->
         <context-menu-programmatical menu-entries={"Move":"move","Delete":"delete"}  id="contextMenuMarker"></context-menu-programmatical>
 
-        <midi-window title="Profil">
+        <midi-window id='ProfileWindow', title="Profil">
             <trail-profil></trail-profil>
         </midi-window>
 
