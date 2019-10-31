@@ -23,6 +23,13 @@
       "webRoot": "${workspaceFolder}",
       "timeout": 30000,
       "breakOnLoad": true
+    },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Launch Chrome against localhost",
+      "url": "http://localhost:8080",
+      "webRoot": "${workspaceFolder}"
     }
   ],
   "compounds": [
