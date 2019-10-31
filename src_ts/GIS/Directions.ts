@@ -108,8 +108,8 @@ class DirectionsImpl implements Directions {
             coordinates = coordinates + marker.lonLatEle[0] + ',' + marker.lonLatEle[1] + ';'
         });
 
-        //let url = 'https://api.mapbox.com/directions/v5/mapbox/walking/' + coordinates.slice(0, -1) + '?steps=true&geometries=geojson&access_token=' + accessToken;
-        let url = 'http://router.project-osrm.org/route/v1/walking/' + coordinates.slice(0, -1) + '?overview=false';
+        let url = 'https://api.mapbox.com/directions/v5/mapbox/walking/' + coordinates.slice(0, -1) + '?steps=true&geometries=geojson&access_token=' + accessToken;
+        //let url = 'http://router.project-osrm.org/route/v1/walking/' + coordinates.slice(0, -1) + '?overview=false';
 
 
         let response = await fetch(url);
