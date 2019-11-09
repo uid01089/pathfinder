@@ -78,7 +78,7 @@ class DirectionsImpl implements Directions {
     private async addElevations(accessToken: string) {
 
         var evaluationPromisses = this.routes[0].geometry.coordinates.map(async (coordinate) => {
-            let evaluation = await Elevation.getElevation(coordinate, accessToken);
+            let evaluation = await Elevation.getElevation({ longitude: coordinate[0], latitude: coordinate[1] }, accessToken);
             coordinate[2] = evaluation;
         });
 
@@ -105,7 +105,7 @@ class DirectionsImpl implements Directions {
     static async getDirections(markers: IMarker[], accessToken: string): Promise<DirectionsImpl> {
         var coordinates: string = "";
         markers.forEach((marker) => {
-            coordinates = coordinates + marker.lonLatEle[0] + ',' + marker.lonLatEle[1] + ';'
+            coordinates = coordinates + marker.lonLatEle.longitude + ',' + marker.lonLatEle.latitude + ';'
         });
 
         let url = 'https://api.mapbox.com/directions/v5/mapbox/walking/' + coordinates.slice(0, -1) + '?steps=true&geometries=geojson&access_token=' + accessToken;
@@ -146,9 +146,9 @@ class DirectionsImpl implements Directions {
 
 
         track.lonLatEles.forEach((lonLatEles) => {
-            var waypoint = { location: lonLatEles, distance: 0 } as Waypoint;
+            var waypoint = { location: [lonLatEles.longitude, lonLatEles.latitude, lonLatEles.elevation], distance: 0 } as Waypoint;
             directions.waypoints.push(waypoint);
-            directions.routes[0].geometry.coordinates.push(lonLatEles);
+            directions.routes[0].geometry.coordinates.push([lonLatEles.longitude, lonLatEles.latitude, lonLatEles.elevation]);
         });
 
         directions.addDistances();
@@ -164,9 +164,9 @@ class DirectionsImpl implements Directions {
         var distance: number = 0;
 
         markers.forEach((marker) => {
-            var waypoint = { location: marker.lonLatEle, distance: 0 } as Waypoint;
+            var waypoint = { location: [marker.lonLatEle.longitude, marker.lonLatEle.latitude, marker.lonLatEle.elevation], distance: 0 } as Waypoint;
             directions.waypoints.push(waypoint);
-            directions.routes[0].geometry.coordinates.push(marker.lonLatEle);
+            directions.routes[0].geometry.coordinates.push([marker.lonLatEle.longitude, marker.lonLatEle.latitude, marker.lonLatEle.elevation]);
         });
 
         return directions;

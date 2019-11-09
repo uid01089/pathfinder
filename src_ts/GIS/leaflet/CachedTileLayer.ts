@@ -1,7 +1,7 @@
 import { TileLayer, Coords, DoneCallback } from 'leaflet';
 import { FetchCache } from '../../lib/FetchCache';
 
-const CACHE_NAME = "CACHED_TILE_LAYERS";
+const CACHE_NAME = "BuildUtil";
 
 
 class CachedTileLayer extends TileLayer {

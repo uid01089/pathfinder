@@ -13,7 +13,7 @@ class MarkerImpl implements IMarker {
     constructor(longitude: number, latitude: number, popup?: string) {
         this.longitude = longitude;
         this.latitude = latitude;
-        this.lonLatEle = [longitude, latitude];
+        this.lonLatEle = { longitude: longitude, latitude: latitude };
         this.popup = popup || "";
 
     }

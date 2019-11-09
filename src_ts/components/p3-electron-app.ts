@@ -30,11 +30,6 @@ class P3ElectronApp extends Component {
         </style>
 
         <leaf-map-main></leaf-map-main>
-
-
-
-
- 
  
     `;
   }

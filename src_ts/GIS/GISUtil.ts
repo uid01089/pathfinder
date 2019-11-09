@@ -1,5 +1,9 @@
 
-type LonLatEle = number[];
+interface LonLatEle {
+    longitude: number,
+    latitude: number,
+    elevation?: number
+}
 
 
 interface TileInfo {
@@ -77,7 +81,7 @@ class GISUtil {
             xTile: longTile,
             yTile: latTile,
             zoom: zoom,
-            leftUp: [longStartTile, latStartTile],
+            leftUp: { longitude: longStartTile, latitude: latStartTile },
             lonArea: Math.abs(longStartTileNext - longStartTile),
             latArea: Math.abs(latStartTileNext - latStartTile),
         } as TileInfo;

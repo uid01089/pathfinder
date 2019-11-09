@@ -34,6 +34,7 @@ module.exports = {
             { from: './resources/*.png', to: '.', writeToDisk: true },
             { from: './node_modules/leaflet/dist/images/**/', to: '.', writeToDisk: true }
         ]),
+        /*
         new SshWebpackPlugin({
             host: 'koserver',
             port: '22',
@@ -43,6 +44,17 @@ module.exports = {
             after: 'mkdir afterTest',
             from: './dist',
             to: '/var/www/html/pathfinder',
+        })
+        */
+        new SshWebpackPlugin({
+            host: 'ssh.strato.de',
+            port: '22',
+            username: 'skschmid.de',
+            privateKey: require('fs').readFileSync('/Users/konni/.ssh/id_rsa'),
+            before: 'mkdir beforeTest',
+            after: 'mkdir afterTest',
+            from: './dist',
+            to: './pathfinder',
         })
     ],
     module: {

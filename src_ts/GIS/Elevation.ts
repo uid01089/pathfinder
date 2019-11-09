@@ -10,16 +10,17 @@ class Elevation {
 
     public static async getElevation(coordinate: LonLatEle, accessToken: string): Promise<number> {
 
-        let key = coordinate[0].toFixed(3) + "-" + coordinate[1].toFixed(4);
+        let key = coordinate.longitude.toFixed(3) + "-" + coordinate.latitude.toFixed(4);
         let elevation = Elevation.cache.get(key);
         if (elevation === undefined) {
+            /*
             let urlElevationNotExactly = 'https://api.mapbox.com/v4/mapbox.mapbox-terrain-v2/tilequery/' + coordinate[0] + "," + coordinate[1] + '.json?&access_token=' + accessToken;
             let response = await fetch(urlElevationNotExactly);
             var elevationFeatures = await response.json() as FeatureCollection;
             var featureCollectionImpl = new FeatureCollectionImpl(elevationFeatures);
             var elevationNotExaclty = featureCollectionImpl.getElevation();
 
-
+            */
 
 
 
@@ -28,7 +29,7 @@ class Elevation {
             // Retrieve picture with elevation coded as RGB
             const zoom = 10;
             var mapBoxUtil = new GISUtil();
-            var tailInfo = mapBoxUtil.getTailInfo(coordinate[0], coordinate[1], zoom);
+            var tailInfo = mapBoxUtil.getTailInfo(coordinate.longitude, coordinate.latitude, zoom);
             let url = 'https://api.mapbox.com/v4/mapbox.terrain-rgb/' + zoom + '/' + tailInfo.xTile + '/' + tailInfo.yTile + '.pngraw?access_token=' + accessToken;
 
             var image = await PictureUtil.load(url);
@@ -39,8 +40,8 @@ class Elevation {
             var latitudePicturePixel = image.height;
             var longitutdePicturePixel = image.width;
 
-            var x = longitutdePicturePixel * Math.abs(coordinate[0] - tailInfo.leftUp[0]) / tailInfo.lonArea;
-            var y = latitudePicturePixel * Math.abs(coordinate[1] - tailInfo.leftUp[1]) / tailInfo.latArea;
+            var x = longitutdePicturePixel * Math.abs(coordinate.longitude - tailInfo.leftUp.longitude) / tailInfo.lonArea;
+            var y = latitudePicturePixel * Math.abs(coordinate.latitude - tailInfo.leftUp.latitude) / tailInfo.latArea;
 
             // Just for find out how far the input data can be simplified
             var deltaLong = tailInfo.lonArea / longitutdePicturePixel; // 0.001

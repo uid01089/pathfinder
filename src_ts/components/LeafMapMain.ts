@@ -23,6 +23,9 @@ import '../lib/components/FileDialog';
 import * as GEO from 'leaflet-control-geocoder';
 import { LeafletCss } from './Leaflet.css';
 import { MidiWindow } from '../lib/components/MidiWindow';
+import { Landscape3d } from './Landscape3d';
+import './Landscape3d';
+import { BoundingBox } from '../GIS/BoundingBox';
 
 
 
@@ -41,7 +44,6 @@ class LeafMapMain extends Component {
 
 
 	markers: Array<Marker>;
-	geojson: FeatureCollection;
 	map: Map;
 	_reducer: RedMapMain;
 	reduxListenerUnsubsribe: Function;
@@ -49,6 +51,7 @@ class LeafMapMain extends Component {
 	geoJsonLayer: L.GeoJSON<any>;
 	waymarkedtrails: TileLayer;
 	showHikingLayer: boolean;
+	featureCollection: FeatureCollectionImpl;
 
 	constructor() {
 		super();
@@ -73,6 +76,8 @@ class LeafMapMain extends Component {
 				}
 			} as Feature]
 		};
+
+		this.featureCollection = FeatureCollectionImpl.getFeatureCollection();
 
 		this.geoJsonLayer = L.geoJSON(geojson);
 
@@ -101,7 +106,7 @@ class LeafMapMain extends Component {
 		// set the position and zoom level of the map
 		this.map.setView([49.317390, 12.035533], 9);
 
-		var bounds = this.map.getBounds();
+
 
 		// create a tileLayer with the tiles, attribution
 		var opentopomap = new CachedTileLayer('https://opentopomap.org/{z}/{x}/{y}.png', {
@@ -109,8 +114,14 @@ class LeafMapMain extends Component {
 			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>'
 		});
 
+
 		// add the tile layer to the map
 		opentopomap.addTo(this.map);
+
+		var container = opentopomap.getContainer();
+		var pane = opentopomap.getPane("tilePane");
+
+
 		//this.waymarkedtrails.addTo(this.map);
 		this.geoJsonLayer.addTo(this.map);
 
@@ -162,7 +173,6 @@ class LeafMapMain extends Component {
 
 
 
-
 		this.map.on('click', (e) => {
 			var event = e as LeafletMouseEvent
 			var marker = new Marker(event.latlng, {
@@ -171,12 +181,12 @@ class LeafMapMain extends Component {
 
 			marker.on('dragend', (e) => {
 				//this.retrieveRoute();
-				this._reducer.changeMarker(this.markers.indexOf(marker), { lonLatEle: [marker.getLatLng().lng, marker.getLatLng().lat] } as IMarker);
+				this._reducer.changeMarker(this.markers.indexOf(marker), { lonLatEle: { longitude: marker.getLatLng().lng, latitude: marker.getLatLng().lat } } as IMarker);
 			});
 
 			// Add it to the marker collection
 			this.markers.push(marker);
-			this._reducer.addMarker({ lonLatEle: [marker.getLatLng().lng, marker.getLatLng().lat] } as IMarker);
+			this._reducer.addMarker({ lonLatEle: { longitude: marker.getLatLng().lng, latitude: marker.getLatLng().lat } } as IMarker);
 
 
 			marker.addTo(this.map);
@@ -187,6 +197,8 @@ class LeafMapMain extends Component {
 				context.showMenuAndRegisterEvents(ev, marker);
 			});
 
+
+
 		});
 
 
@@ -194,6 +206,12 @@ class LeafMapMain extends Component {
 
 	registerCallBack() {
 
+		let profileWindow = this.shadowRoot.getElementById("ProfileWindow") as MidiWindow;
+		profileWindow.hide();
+
+		let landscapeWindow3d = this.shadowRoot.getElementById("3DLandscape") as MidiWindow;
+		landscapeWindow3d.hide();
+		let landscapeWindow3dContent = this.shadowRoot.getElementById("3DLandscapeContent") as Landscape3d;
 
 
 
@@ -234,8 +252,16 @@ class LeafMapMain extends Component {
 					break;
 
 				case 'showProfile':
-					let profileWindow = this.shadowRoot.getElementById("ProfileWindow") as MidiWindow;
 					profileWindow.show();
+					break;
+
+				case 'show3dProfile':
+					var bounds = this.map.getBounds();
+					bounds.getSouthWest().lng
+					var boundingBox = new BoundingBox(bounds.getSouthWest().lng, bounds.getSouthWest().lat, bounds.getNorthEast().lng, bounds.getNorthEast().lat)
+					landscapeWindow3d.show();
+					landscapeWindow3dContent.show(boundingBox, 'https://opentopomap.org/{z}/{x}/{y}.png', this.featureCollection, this.map.getZoom());
+					break;
 
 
 				default:
@@ -252,7 +278,7 @@ class LeafMapMain extends Component {
 					var marker: Marker = details.ident;
 
 					var index = this.markers.indexOf(details.ident);
-					this._reducer.deleteMarker(index, { lonLatEle: [marker.getLatLng().lng, marker.getLatLng().lat] } as IMarker);
+					this._reducer.deleteMarker(index, { lonLatEle: { longitude: marker.getLatLng().lng, latitude: marker.getLatLng().lat } } as IMarker);
 
 					var index = this.markers.indexOf(details.ident);
 					if (index > -1) {
@@ -272,6 +298,8 @@ class LeafMapMain extends Component {
 
 
 		});
+
+
 	}
 
 	getHTML() {
@@ -297,13 +325,17 @@ class LeafMapMain extends Component {
         <div id='map'></div>
 
         <!-- Hamburger menu -->
-        <hamburger-menu-hide menu-entries={"Open%20gpx-file":"open","Save%20as%20gpx-file":"save","Delete%20all%20markers":"delAllMarkers","Switch%20on/off%20autoroute":"toggleAutoRoute","Switch%20on/off%20hiking%20tracks":"toggleHikingTracks","Show%20profile":"showProfile"} ident="" id="hamburgerMenu"></hamburger-menu-hide>
+        <hamburger-menu-hide menu-entries={"Open%20gpx-file":"open","Save%20as%20gpx-file":"save","Delete%20all%20markers":"delAllMarkers","Switch%20on/off%20autoroute":"toggleAutoRoute","Switch%20on/off%20hiking%20tracks":"toggleHikingTracks","Show%20profile":"showProfile","Show%203dProfile":"show3dProfile"} ident="" id="hamburgerMenu"></hamburger-menu-hide>
         
         <!-- Context menu for the markers -->
         <context-menu-programmatical menu-entries={"Move":"move","Delete":"delete"}  id="contextMenuMarker"></context-menu-programmatical>
 
         <midi-window id='ProfileWindow', title="Profil">
-            <trail-profil></trail-profil>
+            <trail-profil slot='content'></trail-profil>
+        </midi-window>
+
+		<midi-window id='3DLandscape', title="3DLandscape">
+            <three-landscape-element slot='content' id='3DLandscapeContent'></three-landscape-element>
         </midi-window>
 
         <file-dialog id="OpenGpxFileDialog"></file-dialog>
@@ -338,6 +370,9 @@ class LeafMapMain extends Component {
 				// then update the map
 				this.geoJsonLayer.clearLayers();
 				this.geoJsonLayer.addData(FeatureCollectionImpl.getFeatureCollection(directions));
+
+
+				this.featureCollection = FeatureCollectionImpl.getFeatureCollection(directions);
 
 				break;
 			case MAP_MAIN_ADD_MARKER:

@@ -28,13 +28,7 @@ class GpxFile {
             var track: Track = { lonLatEles: [] };
             trk.trkseg.forEach((trkseg) => {
                 trkseg.trkpt.forEach(trkpt => {
-                    var lonLatEle: LonLatEle = [];
-
-                    lonLatEle.push(trkpt.$.lon);
-                    lonLatEle.push(trkpt.$.lat);
-                    lonLatEle.push(trkpt.ele[0]);
-
-                    track.lonLatEles.push(lonLatEle);
+                    track.lonLatEles.push({ longitude: trkpt.$.lon, latitude: trkpt.$.lat, elevation: trkpt.ele[0] });
                 });
             });
 

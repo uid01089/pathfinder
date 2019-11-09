@@ -210,7 +210,7 @@ class Overpass extends L.Layer {
         return new Promise<any>(async (resolve, reject) => {
             var release: Function;
 
-            var boxString = box.southWest[0] + "," + box.southWest[1] + "," + box.northEast[0] + "," + box.northEast[1];
+            var boxString = box.southWest.longitude + "," + box.southWest.latitude + "," + box.northEast.longitude + "," + box.northEast.latitude;
             let url = (`http://overpass-api.de/api/interpreter/?data=[out:json][timeout:25];(node[${query}](bbox);way[${query}](bbox);rel[${query}](bbox););(._;%3E;);out%20center;&bbox=${boxString}`);
 
             try {

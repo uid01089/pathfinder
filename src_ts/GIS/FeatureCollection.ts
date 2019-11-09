@@ -3,6 +3,7 @@ import { Directions } from './Directions'
 
 class FeatureCollectionImpl implements FeatureCollection {
 
+
     type: "FeatureCollection";
     features: Feature<Geometry, { [name: string]: any; }>[];
 
@@ -34,14 +35,29 @@ class FeatureCollectionImpl implements FeatureCollection {
             }
         });
 
+        /*
         if (elevation == 0) {
             console.log(this.features);
         }
+        */
 
         return elevation;
     }
 
-    static getFeatureCollection(directions: Directions): FeatureCollectionImpl {
+    clear() {
+        this.features = [{
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+
+                ] as number[][]
+            }
+        } as Feature];
+    }
+
+
+    static getFeatureCollection(directions?: Directions): FeatureCollectionImpl {
         var featureCollection = new FeatureCollectionImpl();
         if (directions != null) {
 

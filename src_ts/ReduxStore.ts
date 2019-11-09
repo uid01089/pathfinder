@@ -25,7 +25,7 @@ interface ProgramSetting {
 const initiateState: State = {
     action: null,
     markers: [],
-    center: [0, 0, 0],
+    center: { longitude: 0, latitude: 0, elevation: 0 },
     directions: null,
     programSetting: {
         autoRouting: false,

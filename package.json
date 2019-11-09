@@ -19,6 +19,8 @@
     "redux-thunk": "^2.3.0",
     "simple-git": "^1.124.0",
     "stream": "0.0.2",
+    "three": "^0.110.0",
+    "three-orbitcontrols": "^2.108.1",
     "timers": "^0.1.1",
     "xml2js": "^0.4.19"
   },
