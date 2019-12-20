@@ -83,7 +83,7 @@ class LeafMapMain extends Component {
 
 		this.waymarkedtrails = new TileLayer('https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png', {
 			maxZoom: 18,
-			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>'
+			attribution: '<a href="https://hiking.waymarkedtrails.org/help/legal">waymarkedtrails.org</a>'
 		});
 
 		this.showHikingLayer = false;
@@ -111,7 +111,7 @@ class LeafMapMain extends Component {
 		// create a tileLayer with the tiles, attribution
 		var opentopomap = new CachedTileLayer('https://opentopomap.org/{z}/{x}/{y}.png', {
 			maxZoom: 18,
-			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>'
+			attribution: '<a href="http://opentopomap.org">opentopomap.org</a>'
 		});
 
 
@@ -130,7 +130,7 @@ class LeafMapMain extends Component {
 			layers: "dwd:SAT_WELT_KOMPOSIT",
 			format: 'image/png',
 			transparent: true,
-			attribution: "Weather data © 2012 IEM Nexrad"
+			attribution: '<a href="https://maps.dwd.de/geoserver/web/">DWD-SAT_WELT_KOMPOSIT</a>'
 		});
 
 		//satelitte.addTo(this.map);
@@ -140,7 +140,7 @@ class LeafMapMain extends Component {
 			layers: "dwd:FX-Produkt",
 			format: 'image/png',
 			transparent: true,
-			attribution: "Weather data © 2012 IEM Nexrad"
+			attribution: '<a href="https://maps.dwd.de/geoserver/web/">DWD-FX-Produkt</a>'
 		});
 
 		//radar.addTo(this.map);
