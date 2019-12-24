@@ -77,10 +77,13 @@ class DirectionsImpl implements Directions {
 
     private async addElevations(accessToken: string) {
 
+        let elevations = new Elevation();
+
         var evaluationPromisses = this.routes[0].geometry.coordinates.map(async (coordinate) => {
-            let evaluation = await Elevation.getElevation({ longitude: coordinate[0], latitude: coordinate[1] }, accessToken);
+            let evaluation = await elevations.getElevation({ longitude: coordinate[0], latitude: coordinate[1] }, accessToken);
             coordinate[2] = evaluation;
         });
+
 
         await Promise.all(evaluationPromisses);
     }

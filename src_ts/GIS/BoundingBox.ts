@@ -63,11 +63,13 @@ class BoundingBox {
 
     async getDimensions(): Promise<Dimensions> {
 
+        let elevations = new Elevation();
+
         if (null == this.dimension) {
             const gisUtil = new GISUtil();
 
 
-            var nwElevation = await Elevation.getElevation({ longitude: this.nwLon, latitude: this.nwLat }, 'pk.eyJ1IjoidWlkMDEwODkiLCJhIjoiY2p6M295MGs2MDVkMDNwb2N5MHljNGFnZiJ9.QLijbhXZfDLxNfIEsBk9Xw');
+            var nwElevation = await elevations.getElevation({ longitude: this.nwLon, latitude: this.nwLat }, 'pk.eyJ1IjoidWlkMDEwODkiLCJhIjoiY2p6M295MGs2MDVkMDNwb2N5MHljNGFnZiJ9.QLijbhXZfDLxNfIEsBk9Xw');
 
             var lat = Math.abs(this.neLat - this.seLat);
             var lon = Math.abs(this.neLon - this.nwLon);

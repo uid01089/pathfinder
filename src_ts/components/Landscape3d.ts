@@ -209,6 +209,8 @@ class Landscape3d extends ReduxComponent<State> {
 
     private async retrieveElevations(bBox: BoundingBox, raster: number): Promise<number[]> {
         let dimension = await bBox.getDimensions();
+        let elevationProvider = new Elevation();
+
         var elevations: number[] = [];
         const longStep = dimension.longitudeDelta / raster;
         const latiStep = dimension.latitudeDelta / raster;
@@ -218,7 +220,7 @@ class Landscape3d extends ReduxComponent<State> {
             for (var x = 0; x < raster; x++) {
                 var runningLongitude = bBox.swLon + longStep * x;
 
-                var elevation = await Elevation.getElevation({ longitude: runningLongitude, latitude: runningLatitude }, 'pk.eyJ1IjoidWlkMDEwODkiLCJhIjoiY2p6M295MGs2MDVkMDNwb2N5MHljNGFnZiJ9.QLijbhXZfDLxNfIEsBk9Xw');
+                var elevation = await elevationProvider.getElevation({ longitude: runningLongitude, latitude: runningLatitude }, 'pk.eyJ1IjoidWlkMDEwODkiLCJhIjoiY2p6M295MGs2MDVkMDNwb2N5MHljNGFnZiJ9.QLijbhXZfDLxNfIEsBk9Xw');
                 elevations.push(elevation);
 
             }

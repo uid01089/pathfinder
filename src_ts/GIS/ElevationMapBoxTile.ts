@@ -1,14 +1,15 @@
 import { LonLatEle } from './GISUtil';
 import { GISUtil, TileInfo } from './GISUtil';
 import { PictureUtil } from '../lib/PictureUtil';
+import { ElevationProvider } from './ElevationProvider';
 
 
 
-class ElevationMapBoxTile {
+class ElevationMapBoxTile implements ElevationProvider {
 
     static cache: Map<string, number> = new Map();
 
-    public static async getElevation(coordinate: LonLatEle, accessToken: string): Promise<number> {
+    public async getElevation(coordinate: LonLatEle, accessToken: string): Promise<number> {
 
         //var worker = new Worker("./ElevationWorker.ts", { type: "module" });
 

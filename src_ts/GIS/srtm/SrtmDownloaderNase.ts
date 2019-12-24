@@ -17,14 +17,23 @@ class SrtmDownloaderNase extends SrtmDownloaderBase implements SrtmDownloader {
         let tileName = SrtmUtil.getTileName(point);
         var hgtFile = this.cache.get(tileName);
         if (undefined == hgtFile) {
-            var zipFile = await this.download(tileName);
-            var blob = await zipFile.blob();
-            var unzipFile = await JSZip.loadAsync(blob);
-            var hgtContent = await unzipFile.file(tileName + '.hgt').async("arraybuffer");
+            try {
+                var zipFile = await this.download(tileName);
+                var blob = await zipFile.blob();
+                if (blob.size != 0) {
 
-            hgtFile = new HgtFile(hgtContent, { latitude: Math.floor(point.latitude), longitude: Math.floor(point.longitude) } as LonLatEle);
+                    var unzipFile = await JSZip.loadAsync(blob);
+                    var hgtContent = await unzipFile.file(tileName + '.hgt').async("arraybuffer");
 
-            this.cache.set(tileName, hgtFile);
+                    hgtFile = new HgtFile(hgtContent, { latitude: Math.floor(point.latitude), longitude: Math.floor(point.longitude) } as LonLatEle);
+
+                    this.cache.set(tileName, hgtFile);
+                } else {
+                    throw new Error("Blob is empty");
+                }
+            } catch (error) {
+                throw error;
+            }
         }
 
 
@@ -45,6 +54,10 @@ class SrtmDownloaderNase extends SrtmDownloaderBase implements SrtmDownloader {
                 // Not available, go on
             }
 
+        }
+
+        if (zipFile === undefined) {
+            throw new Error("No zipfile fetched");
         }
 
         return zipFile;
