@@ -25,6 +25,11 @@ import { LeafletCss } from './Leaflet.css';
 import { MidiWindow } from '../lib/components/MidiWindow';
 import { Landscape3d } from './Landscape3d';
 import './Landscape3d';
+
+import { Landscape3dSphere } from './Landscape3dSphere';
+import './Landscape3dSphere';
+
+
 import { BoundingBox } from '../GIS/BoundingBox';
 
 
@@ -211,7 +216,7 @@ class LeafMapMain extends Component {
 
 		let landscapeWindow3d = this.shadowRoot.getElementById("3DLandscape") as MidiWindow;
 		landscapeWindow3d.hide();
-		let landscapeWindow3dContent = this.shadowRoot.getElementById("3DLandscapeContent") as Landscape3d;
+		let landscapeWindow3dContent = this.shadowRoot.getElementById("3DLandscapeContent") as Landscape3dSphere;
 
 
 
@@ -335,7 +340,7 @@ class LeafMapMain extends Component {
         </midi-window>
 
 		<midi-window id='3DLandscape', title="3DLandscape">
-            <three-landscape-element slot='content' id='3DLandscapeContent'></three-landscape-element>
+            <three-landscape-shpere-element slot='content' id='3DLandscapeContent'></three-landscape-shpere-element>
         </midi-window>
 
         <file-dialog id="OpenGpxFileDialog"></file-dialog>

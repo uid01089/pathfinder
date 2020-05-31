@@ -42,10 +42,10 @@ class GISUtil {
 
         const R: number = 6371; // Radius of the earth
 
-        const latDistance = this.degToRadians(lat2 - lat1);
-        const lonDistance = this.degToRadians(lon2 - lon1);
+        const latDistance = GISUtil.degToRadians(lat2 - lat1);
+        const lonDistance = GISUtil.degToRadians(lon2 - lon1);
         const a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
-            + Math.cos(this.degToRadians(lat1)) * Math.cos(this.degToRadians(lat2))
+            + Math.cos(GISUtil.degToRadians(lat1)) * Math.cos(GISUtil.degToRadians(lat2))
             * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         var distance = R * c * 1000; // convert to meters
@@ -57,7 +57,7 @@ class GISUtil {
         return Math.sqrt(distance);
     }
 
-    degToRadians(degrees: number): number {
+    public static degToRadians(degrees: number): number {
         var pi = Math.PI;
         return degrees * (pi / 180);
     }
