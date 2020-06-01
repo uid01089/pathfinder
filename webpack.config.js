@@ -1,6 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const SshWebpackPlugin = require('ssh-webpack-plugin');
+//const SshWebpackPlugin = require('ssh-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
@@ -30,10 +30,12 @@ module.exports = {
                 collapseWhitespace: false
             }
         }),
-        new CopyPlugin([
-            { from: './resources/*.png', to: '.', writeToDisk: true },
-            { from: './node_modules/leaflet/dist/images/**/', to: '.', writeToDisk: true }
-        ]),
+        new CopyPlugin({
+            patterns: [
+                { from: './resources/*.png', to: '.' },
+                { from: './node_modules/leaflet/dist/images/*', to: '.' }
+            ],
+        }),
         /*
         new SshWebpackPlugin({
             host: 'koserver',
@@ -45,7 +47,7 @@ module.exports = {
             from: './dist',
             to: '/var/www/html/pathfinder',
         })
-        */
+
         new SshWebpackPlugin({
             host: 'ssh.strato.de',
             port: '22',
@@ -56,6 +58,7 @@ module.exports = {
             from: './dist',
             to: './pathfinder',
         })
+                */
     ],
     module: {
         rules: [
