@@ -192,6 +192,8 @@ class LeafMapMain extends Component {
 
 		//L.control.geocoder().addTo(this.map);
 
+		L.control.scale().addTo(this.map);
+
 
 
 
