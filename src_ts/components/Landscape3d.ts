@@ -12,22 +12,39 @@ import { WebGLRenderer, WebGLRendererParameters } from 'three';
 import { Elevation } from '../GIS/Elevation';
 import { CanvasMap } from '../GIS/CanvasMap';
 import { FeatureCollection, LineString } from 'geojson';
+import { HamburgerMenuTree } from '../lib/components/HamburgerMenuTree';
+import '../lib/components/HamburgerMenuTree';
+import { CT_Config, ContextMenuTreeEventResult, CT_Selection } from '../lib/components/ContextMenuTree';
+import '../lib/components/Loader';
+
 
 class Landscape3dReducer extends AbstractReducer<State> {
     constructor() {
         super(reduxStoreInstance);
     }
-    reducer(state: State, action: Action): State {
+    reducer(state: State, action: Action<any>): State {
 
         return state;
     }
 }
+
+const ACCESS_TOKEN = 'pk.eyJ1IjoidWlkMDEwODkiLCJhIjoiY2p6M295MGs2MDVkMDNwb2N5MHljNGFnZiJ9.QLijbhXZfDLxNfIEsBk9Xw';
+
+
+const TOPOMAP_TILE = 'https://opentopomap.org/{z}/{x}/{y}.png';
+const SATELLITE_TILE = 'https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}.webp?' + 'access_token=' + ACCESS_TOKEN;
+const OPENSTREETMAP_TILE = 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png';
+
 
 class Landscape3d extends ReduxComponent<State> {
     renderer: THREE.WebGLRenderer;
     camera: THREE.PerspectiveCamera;
     controls: OrbitControls;
     scene: THREE.Scene;
+    bBox: BoundingBox;
+    featureCollection: any;
+    zoom: number;
+    tile: string;
 
 
     constructor() {
@@ -43,10 +60,10 @@ class Landscape3d extends ReduxComponent<State> {
      * such as fetching resources or rendering. Generally, you should try to delay work until
      * this time.
      */
-    connectedCallback() {
+    connectedCallback(): void {
         super.connectedCallback();
 
-
+        this.tile = TOPOMAP_TILE;
     }
 
     /**
@@ -54,10 +71,10 @@ class Landscape3d extends ReduxComponent<State> {
      *
      * @memberof Component
      */
-    registerCallBack() {
+    registerCallBack(): void {
         super.registerCallBack();
 
-        let canvas = this.shadowRoot.getElementById("Canvas") as HTMLCanvasElement;
+        const canvas = this.shadowRoot.getElementById("Canvas") as HTMLCanvasElement;
 
 
 
@@ -67,10 +84,61 @@ class Landscape3d extends ReduxComponent<State> {
 
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
 
+        const contextHamburgerMenu = this.shadowRoot.getElementById("hamburgerMenu") as HamburgerMenuTree;
 
 
 
+        const config: CT_Config = {
+            nodes: [
+                {
+                    name: "Map",
+                    nodes: [],
+                    leafs:
+                        [
+                            { name: "Map", value: "TopoMap", valueCollection: ["TopoMap", "Satellite", "OpenStreetMap"] } as CT_Selection,
+                        ]
+                }],
+            leafs: [
 
+            ]
+        };
+
+        contextHamburgerMenu.setConfig(config);
+        contextHamburgerMenu.addEventListener('valueSelected', (e: CustomEvent) => {
+            const details: ContextMenuTreeEventResult = e.detail;
+
+            console.log(details.path);
+
+            switch (details.path) {
+                case '/Map/Map':
+                    {
+                        switch (details.value) {
+                            case "TopoMap":
+                                {
+                                    this.tile = TOPOMAP_TILE;
+                                    this.updateShow();
+                                }
+                                break;
+                            case "Satellite":
+                                {
+                                    this.tile = SATELLITE_TILE;
+                                    this.updateShow();
+                                }
+                                break;
+                            case "OpenStreetMap":
+                                {
+                                    this.tile = OPENSTREETMAP_TILE;
+                                    this.updateShow();
+                                }
+                                break;
+
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        });
 
 
     }
@@ -78,7 +146,7 @@ class Landscape3d extends ReduxComponent<State> {
     /**
      * Returns the HTML from which a template shall be created
      */
-    getHTML() {
+    getHTML(): string {
 
         return ReduxComponent.html` 
         ${CSS}
@@ -91,11 +159,25 @@ class Landscape3d extends ReduxComponent<State> {
               height: 500px; 
               width: 800px;
               }
+
+            #Loader {
+                position: absolute;
+                top: 250px;
+                left: 400px;
+                display:block
+            }
         </style>
 
-        <section>
-          <canvas id="Canvas"></canvas>
-        </section>        
+
+        <!-- Hamburger menu -->
+        <hamburger-menu-tree  id="hamburgerMenu"></hamburger-menu-tree>
+                
+        <canvas id="Canvas"></canvas>
+
+        <loader-element id="Loader"></loader-element>
+        
+
+         
 
         `;
     }
@@ -104,7 +186,7 @@ class Landscape3d extends ReduxComponent<State> {
      * This operation is called by Redux
      * @param reduxStore 
      */
-    triggeredFromRedux(reduxStore: AbstractReduxStore<State>) {
+    triggeredFromRedux(reduxStore: AbstractReduxStore<State>): void {
 
         super.triggeredFromRedux(reduxStore);
 
@@ -112,40 +194,63 @@ class Landscape3d extends ReduxComponent<State> {
         // meaning update UI :-)
         switch (reduxStore.getState().action) {
             default:
-        };
+        }
     }
 
     /**
      * 
      * @param bBox 
      */
-    show(bBox: BoundingBox, tile: string, featureCollection: FeatureCollection, zoom: number) {
+    show(bBox: BoundingBox, featureCollection: FeatureCollection, zoom: number): void {
 
+
+        const loader = this.shadowRoot.getElementById("Loader") as HTMLScriptElement;
+        loader.style.display = 'block';
+
+        this.bBox = bBox;
+        this.featureCollection = featureCollection;
+        this.zoom = zoom;
 
         this.scene = new THREE.Scene();
 
 
-        var geometry = new THREE.BoxGeometry(1, 1, 1);
-        var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-        var cube = new THREE.Mesh(geometry, material);
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const cube = new THREE.Mesh(geometry, material);
         this.scene.add(cube);
 
         this.setupCamera();
         this.addLights();
-        this.addGround(bBox, tile, featureCollection, zoom);
+        const promise = this.addGround(bBox, this.tile, featureCollection, zoom);
+        promise.then(() => {
+            this.render();
+
+            loader.style.display = 'none';
+        });
 
 
 
-        this.render();
+
+
+
+
+
+
 
     }
 
-    private async addGround(bBox: BoundingBox, tile: string, featureCollection: FeatureCollection, zoom: number) {
+    private updateShow(): void {
+        this.show(this.bBox, this.featureCollection, this.zoom);
+    }
 
-        var canvasMap = new CanvasMap(bBox, zoom, tile);
-        canvasMap.addFeature(featureCollection as FeatureCollection<LineString>);
-        var canvas = await canvasMap.getCanvas();
-        let bBoxCanvas = canvasMap.getBoundingBox();
+
+
+    private async addGround(bBox: BoundingBox, tile: string, featureCollection: FeatureCollection, zoom: number): Promise<void> {
+
+        const canvasMap = new CanvasMap(bBox, zoom, tile);
+        await canvasMap.addFeature(featureCollection as FeatureCollection<LineString>);
+        const canvas = await canvasMap.getCanvas();
+        const bBoxCanvas = canvasMap.getBoundingBox();
 
 
         /*
@@ -160,32 +265,32 @@ class Landscape3d extends ReduxComponent<State> {
         const SIZE = 2000;
 
 
-        var dimension = await bBoxCanvas.getDimensions();
-        let zoomLevel = SIZE / dimension.y;
+        const dimension = await bBoxCanvas.getDimensions();
+        const zoomLevel = SIZE / dimension.y;
 
         //var geometry = new THREE.PlaneGeometry(SIZE * window.innerWidth / window.innerHeight, SIZE, RASTER - 1, RASTER - 1);
-        var geometry = new THREE.PlaneGeometry(SIZE * canvas.width / canvas.height, SIZE, RASTER - 1, RASTER - 1);
+        const geometry = new THREE.PlaneGeometry(SIZE * canvas.width / canvas.height, SIZE, RASTER - 1, RASTER - 1);
 
-        var texture = new THREE.CanvasTexture(canvas);
+        const texture = new THREE.CanvasTexture(canvas);
         texture.minFilter = THREE.LinearFilter;
 
-        var material = new THREE.MeshBasicMaterial({
+        const material = new THREE.MeshBasicMaterial({
             map: texture
         });
 
-        var elevations = await this.retrieveElevations(bBoxCanvas, RASTER);
+        const elevations = await this.retrieveElevations(bBoxCanvas, RASTER, zoom);
 
 
         // Calculate offset which may be removed
-        var minElevation = Number.POSITIVE_INFINITY;
+        let minElevation = Number.POSITIVE_INFINITY;
         elevations.forEach((elevation) => {
             minElevation = Math.min(minElevation, elevation);
         })
 
 
 
-        for (var i = 0; i < geometry.vertices.length; i++) {
-            var normHight = elevations[i] - minElevation;
+        for (let i = 0; i < geometry.vertices.length; i++) {
+            const normHight = elevations[i] - minElevation;
             geometry.vertices[i].z = normHight * zoomLevel;
         }
 
@@ -193,9 +298,9 @@ class Landscape3d extends ReduxComponent<State> {
         geometry.computeVertexNormals();
 
 
-        var plane = new THREE.Mesh(geometry, material);
+        const plane = new THREE.Mesh(geometry, material);
 
-        var q = new THREE.Quaternion();
+        const q = new THREE.Quaternion();
         q.setFromAxisAngle(new THREE.Vector3(-1, 0, 0), 90 * Math.PI / 180);
         plane.quaternion.multiplyQuaternions(q, plane.quaternion);
 
@@ -205,22 +310,23 @@ class Landscape3d extends ReduxComponent<State> {
 
 
 
+
     }
 
-    private async retrieveElevations(bBox: BoundingBox, raster: number): Promise<number[]> {
-        let dimension = await bBox.getDimensions();
-        let elevationProvider = new Elevation();
+    private async retrieveElevations(bBox: BoundingBox, raster: number, zoom: number): Promise<number[]> {
+        const dimension = await bBox.getDimensions();
+        const elevationProvider = new Elevation();
 
-        var elevations: number[] = [];
+        const elevations: number[] = [];
         const longStep = dimension.longitudeDelta / raster;
         const latiStep = dimension.latitudeDelta / raster;
-        for (var y = 0; y < raster; y++) {
+        for (let y = 0; y < raster; y++) {
 
-            var runningLatitude = bBox.neLat - latiStep * y;
-            for (var x = 0; x < raster; x++) {
-                var runningLongitude = bBox.swLon + longStep * x;
+            const runningLatitude = bBox.neLat - latiStep * y;
+            for (let x = 0; x < raster; x++) {
+                const runningLongitude = bBox.swLon + longStep * x;
 
-                var elevation = await elevationProvider.getElevation({ longitude: runningLongitude, latitude: runningLatitude }, 'pk.eyJ1IjoidWlkMDEwODkiLCJhIjoiY2p6M295MGs2MDVkMDNwb2N5MHljNGFnZiJ9.QLijbhXZfDLxNfIEsBk9Xw');
+                const elevation = await elevationProvider.getElevation({ longitude: runningLongitude, latitude: runningLatitude }, 'pk.eyJ1IjoidWlkMDEwODkiLCJhIjoiY2p6M295MGs2MDVkMDNwb2N5MHljNGFnZiJ9.QLijbhXZfDLxNfIEsBk9Xw');
                 elevations.push(elevation);
 
             }
@@ -238,11 +344,11 @@ class Landscape3d extends ReduxComponent<State> {
     }
 
     private addLights() {
-        var ambientLight = new THREE.AmbientLight(0x444444);
+        const ambientLight = new THREE.AmbientLight(0x444444);
         ambientLight.intensity = 0.8;
         this.scene.add(ambientLight);
 
-        var directionalLight = new THREE.DirectionalLight(0xffffff);
+        const directionalLight = new THREE.DirectionalLight(0xffffff);
 
         directionalLight.position.set(900, 400, 0).normalize();
         this.scene.add(directionalLight);
@@ -259,7 +365,7 @@ class Landscape3d extends ReduxComponent<State> {
         return needResize;
     }
 
-    render() {
+    render(): void {
         if (this.resizeRendererToDisplaySize()) {
             const canvas: HTMLCanvasElement = this.renderer.domElement;
             this.camera.aspect = canvas.clientWidth / canvas.clientHeight;

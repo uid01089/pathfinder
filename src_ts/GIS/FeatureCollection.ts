@@ -25,9 +25,9 @@ class FeatureCollectionImpl implements FeatureCollection {
     }
 
     getElevation(): number {
-        var elevation: number = 0;
+        let elevation = 0;
         this.features.forEach((feature) => {
-            var currentElevation = (feature.properties as any).ele;
+            const currentElevation = (feature.properties as any).ele;
             if ((currentElevation !== undefined) && (typeof currentElevation === 'number') && (currentElevation != null)) {
                 if (currentElevation > elevation) {
                     elevation = currentElevation;
@@ -44,7 +44,7 @@ class FeatureCollectionImpl implements FeatureCollection {
         return elevation;
     }
 
-    clear() {
+    clear(): void {
         this.features = [{
             "type": "Feature",
             "geometry": {
@@ -58,7 +58,7 @@ class FeatureCollectionImpl implements FeatureCollection {
 
 
     static getFeatureCollection(directions?: Directions): FeatureCollectionImpl {
-        var featureCollection = new FeatureCollectionImpl();
+        const featureCollection = new FeatureCollectionImpl();
         if (directions != null) {
 
             // direction available, update geojson

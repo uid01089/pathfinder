@@ -5,6 +5,7 @@ import { Map, TileLayer, Marker, LeafletEventHandlerFn, LeafletMouseEvent } from
 import * as L from 'leaflet';
 import { GeoJSON, LineString, FeatureCollection, Feature, Geometry } from 'geojson';
 import '../lib/components/HanburgerMenuAutoHide';
+import '../lib/components/HamburgerMenuTree';
 import { ContextEventResult } from '../lib/components/HanburgerMenuAutoHide';
 import '../lib/components/ContextMenuProgrammatical';
 import { ContextMenuProgrammatical } from '../lib/components/ContextMenuProgrammatical';
@@ -31,6 +32,8 @@ import './Landscape3dSphere';
 
 
 import { BoundingBox } from '../GIS/BoundingBox';
+import { HamburgerMenuTree } from '../lib/components/HamburgerMenuTree';
+import { CT_Config, CT_Button, CT_Selection, CT_Switch, ContextMenuTreeEventResult } from '../lib/components/ContextMenuTree';
 
 
 
@@ -55,13 +58,21 @@ class LeafMapMain extends Component {
 	private mapBoxUtil: GISUtil;
 	geoJsonLayer: L.GeoJSON<any>;
 	waymarkedtrails: TileLayer;
-	showHikingLayer: boolean;
 	featureCollection: FeatureCollectionImpl;
+	clouds: TileLayer.WMS;
+	rainRadar: TileLayer.WMS;
+	parkingLayer: Overpass;
+	alpine_hut: Overpass;
+	wilderness_hut: Overpass;
+	guest_house: Overpass;
+	openTopoMap: CachedTileLayer;
+	sat: CachedTileLayer;
+	openStreetMap: CachedTileLayer;
 
 	constructor() {
 		super();
 
-		this.markers = new Array();
+		this.markers = [];
 		this._reducer = new RedMapMain();
 		reduxStoreInstance.registerReducer(this._reducer);
 		this.reduxListenerUnsubsribe = reduxStoreInstance.subscribe(() => this.reduxtrigger(reduxStoreInstance));
@@ -69,7 +80,7 @@ class LeafMapMain extends Component {
 
 		L.Icon.Default.imagePath = 'node_modules/leaflet/dist/images/';
 
-		var geojson: FeatureCollection = {
+		const geojson: FeatureCollection = {
 			"type": "FeatureCollection",
 			"features": [{
 				"type": "Feature",
@@ -91,17 +102,17 @@ class LeafMapMain extends Component {
 			attribution: '<a href="https://hiking.waymarkedtrails.org/help/legal">waymarkedtrails.org</a>'
 		});
 
-		this.showHikingLayer = false;
+
 
 
 
 
 	}
 
-	connectedCallback() {
+	connectedCallback(): void {
 		super.connectedCallback();
 		console.log('MapMainWindow.');
-		let mapElement = this.shadowRoot.getElementById("map") as HTMLElement;
+		const mapElement = this.shadowRoot.getElementById("map") as HTMLElement;
 
 		this.map = new Map(mapElement, {});
 
@@ -114,24 +125,28 @@ class LeafMapMain extends Component {
 
 
 		// create a tileLayer with the tiles, attribution
-		var opentopomap = new CachedTileLayer('https://opentopomap.org/{z}/{x}/{y}.png', {
+		this.openTopoMap = new CachedTileLayer('https://opentopomap.org/{z}/{x}/{y}.png', {
 			maxZoom: 18,
 			attribution: '<a href="http://opentopomap.org">opentopomap.org</a>'
 		});
 
+		this.openStreetMap = new CachedTileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: '<a href="http://openstreetmap.org">openstreetmap.org</a>'
+		});
+
 
 		// add the tile layer to the map
-		opentopomap.addTo(this.map);
+		this.openTopoMap.addTo(this.map);
 
-		var container = opentopomap.getContainer();
-		var pane = opentopomap.getPane("tilePane");
+
 
 
 		//this.waymarkedtrails.addTo(this.map);
 		this.geoJsonLayer.addTo(this.map);
 
 		// https://maps.dwd.de/geoserver/web/wicket/bookmarkable/org.geoserver.web.demo.MapPreviewPage?0
-		var satelitte = new TileLayer.WMS("https://maps.dwd.de/geoserver/dwd/wms?", {
+		this.clouds = new TileLayer.WMS("https://maps.dwd.de/geoserver/dwd/wms?", {
 			layers: "dwd:SAT_WELT_KOMPOSIT",
 			format: 'image/png',
 			transparent: true,
@@ -141,7 +156,7 @@ class LeafMapMain extends Component {
 		//satelitte.addTo(this.map);
 
 		// https://maps.dwd.de/geoserver/web/wicket/bookmarkable/org.geoserver.web.demo.MapPreviewPage?0
-		var radar = new TileLayer.WMS("https://maps.dwd.de/geoserver/dwd/wms?", {
+		this.rainRadar = new TileLayer.WMS("https://maps.dwd.de/geoserver/dwd/wms?", {
 			layers: "dwd:FX-Produkt",
 			format: 'image/png',
 			transparent: true,
@@ -150,28 +165,30 @@ class LeafMapMain extends Component {
 
 		//radar.addTo(this.map);
 
-		var parkingLayer = new Overpass(12, './resources/marker-icon-park.png', 'amenity=parking');
-		//overpass.addTo(this.map);
+		//fetch("https://api.mapbox.com/v4/mapbox.satellite/9/451/202@2x.webp?sku=1019o2oswGt40&access_token=pk.eyJ1IjoiZXhhbXBsZXMiLCJhIjoiY2p0MG01MXRqMW45cjQzb2R6b2ptc3J4MSJ9.zA2W0IkI0c6KaAhJfk9bWg", {
 
-		var alpine_hut = new Overpass(12, './resources/marker-icon-park.png', 'tourism=alpine_hut');
+		this.sat = new CachedTileLayer('https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}{r}.webp?' + 'access_token=' + ACCESS_TOKEN);
 
-		var wilderness_hut = new Overpass(12, './resources/marker-icon-park.png', 'tourism=wilderness_hut');
 
-		var guest_house = new Overpass(12, './resources/marker-icon-park.png', 'tourism=guest_house');
 
-		var overlayPane = {
-			"Hiking": this.waymarkedtrails,
-			"Satelitte": satelitte,
-			"Radar": radar,
-			"Parking": parkingLayer,
-			"Hütte": alpine_hut,
-			"Hütte1": wilderness_hut,
-			"Gästehaus": guest_house,
+
+
+		this.parkingLayer = new Overpass(12, './resources/marker-icon-park.png', 'amenity=parking');
+
+		this.alpine_hut = new Overpass(12, './resources/marker-icon-park.png', 'tourism=alpine_hut');
+
+		this.wilderness_hut = new Overpass(12, './resources/marker-icon-park.png', 'tourism=wilderness_hut');
+
+		this.guest_house = new Overpass(12, './resources/marker-icon-park.png', 'tourism=guest_house');
+
+		const overlayPane = {
+
+
 		};
 
 		// Add a layer control element to the map
-		var layerControl = L.control.layers(null, overlayPane);
-		layerControl.addTo(this.map);
+		const layerControl = L.control.layers(null, overlayPane);
+		//layerControl.addTo(this.map);
 
 		//L.control.geocoder().addTo(this.map);
 
@@ -179,8 +196,8 @@ class LeafMapMain extends Component {
 
 
 		this.map.on('click', (e) => {
-			var event = e as LeafletMouseEvent
-			var marker = new Marker(event.latlng, {
+			const event = e as LeafletMouseEvent
+			const marker = new Marker(event.latlng, {
 				draggable: true
 			});
 
@@ -198,7 +215,7 @@ class LeafMapMain extends Component {
 
 			marker.getElement().addEventListener('contextmenu', (ev) => {
 
-				let context = this.shadowRoot.getElementById("contextMenuMarker") as ContextMenuProgrammatical;
+				const context = this.shadowRoot.getElementById("contextMenuMarker") as ContextMenuProgrammatical;
 				context.showMenuAndRegisterEvents(ev, marker);
 			});
 
@@ -209,63 +226,196 @@ class LeafMapMain extends Component {
 
 	}
 
-	registerCallBack() {
+	registerCallBack(): void {
 
-		let profileWindow = this.shadowRoot.getElementById("ProfileWindow") as MidiWindow;
+		const profileWindow = this.shadowRoot.getElementById("ProfileWindow") as MidiWindow;
 		profileWindow.hide();
 
-		let landscapeWindow3d = this.shadowRoot.getElementById("3DLandscape") as MidiWindow;
+		const landscapeWindow3d = this.shadowRoot.getElementById("3DLandscape") as MidiWindow;
 		landscapeWindow3d.hide();
-		let landscapeWindow3dContent = this.shadowRoot.getElementById("3DLandscapeContent") as Landscape3dSphere;
+		const landscapeWindow3dContent = this.shadowRoot.getElementById("3DLandscapeContent") as Landscape3dSphere;
 
 
 
-		let contextHamburgerMenu = this.shadowRoot.getElementById("hamburgerMenu");
+		const contextHamburgerMenu = this.shadowRoot.getElementById("hamburgerMenu") as HamburgerMenuTree;
+
+
+
+		const config: CT_Config = {
+			nodes: [
+				{
+					name: "File operations",
+					nodes: [],
+					leafs:
+						[
+							{ name: "Open GPX file" } as CT_Button,
+							{ name: "Save GPX file" } as CT_Button
+						]
+				},
+				{
+					name: "Layers",
+					nodes: [],
+					leafs:
+						[
+							{ name: "Map", value: "TopoMap", valueCollection: ["TopoMap", "Satellite", "OpenStreetMap"] } as CT_Selection,
+							{ name: "Hiking tracks", value: false } as CT_Switch,
+							{ name: "Clouds", value: false } as CT_Switch,
+							{ name: "Raining", value: false } as CT_Switch,
+							{ name: "Parking", value: false } as CT_Switch,
+							{ name: "Alpin Hut", value: false } as CT_Switch,
+							{ name: "Wilderness Hut", value: false } as CT_Switch,
+							{ name: "Guest House", value: false } as CT_Switch,
+						]
+				},
+				{
+					name: "Routing",
+					nodes: [],
+					leafs:
+						[
+							{ name: "Delete all markers" } as CT_Button,
+							{ name: "Automatic routing", value: false } as CT_Switch
+						]
+				},
+				{
+					name: "Utility",
+					nodes: [],
+					leafs:
+						[
+							{ name: "Show Profile" } as CT_Button,
+							{ name: "Show 3d-Graphic" } as CT_Button
+						]
+				}],
+			leafs: [
+
+			]
+		};
+
+		contextHamburgerMenu.setConfig(config);
+
+
 		contextHamburgerMenu.addEventListener('valueSelected', (e: CustomEvent) => {
-			var details: ContextEventResult = e.detail;
+			const details: ContextMenuTreeEventResult = e.detail;
 
-			console.log(details);
+			console.log(details.path);
 
-			switch (details.command) {
-				case 'open':
-
-					let fileDialog = this.shadowRoot.getElementById("OpenGpxFileDialog") as FileDialog;
-					fileDialog.show((files) => {
-						this._reducer.openGpxFile(files);
-					});
+			switch (details.path) {
+				case '/File operations/Open GPX file':
+					{
+						const fileDialog = this.shadowRoot.getElementById("OpenGpxFileDialog") as FileDialog;
+						fileDialog.show((files) => {
+							this._reducer.openGpxFile(files);
+						});
+					}
 
 					break;
-				case 'save':
+				case '/File operations/Save GPX file':
 					this._reducer.saveGpxFile();
 					break;
-				case 'delAllMarkers':
+				case '/Routing/Delete all markers':
 					this._reducer.delAllMarkers();
 					break;
-				case 'toggleAutoRoute':
-					this._reducer.toggleAutoRoute();
+				case '/Routing/Automatic routing':
+					this._reducer.toggleAutoRoute(details.value as boolean);
 					break;
-				case 'toggleHikingTracks':
-
-
-					if (!this.showHikingLayer) {
+				case '/Layers/Hiking tracks':
+					if (details.value) {
 						this.map.addLayer(this.waymarkedtrails);
-						this.showHikingLayer = true;
 					} else {
 						this.map.removeLayer(this.waymarkedtrails);
-						this.showHikingLayer = false;
 					}
 					break;
+				case '/Layers/Clouds':
+					if (details.value) {
+						this.map.addLayer(this.clouds);
+					} else {
+						this.map.removeLayer(this.clouds);
+					}
+					break;
+				case '/Layers/Raining':
+					if (details.value) {
+						this.map.addLayer(this.rainRadar);
+					} else {
+						this.map.removeLayer(this.rainRadar);
+					}
+					break;
+				case '/Layers/Parking':
+					if (details.value) {
+						this.map.addLayer(this.parkingLayer);
+					} else {
+						this.map.removeLayer(this.parkingLayer);
+					}
+					break;
+				case '/Layers/Map':
+					{
+						switch (details.value) {
+							case "TopoMap":
+								{
+									this.map.removeLayer(this.openTopoMap);
+									this.map.removeLayer(this.openStreetMap);
+									this.map.removeLayer(this.sat);
 
-				case 'showProfile':
+									this.map.addLayer(this.openTopoMap);
+
+								}
+								break;
+							case "Satellite":
+								{
+									this.map.removeLayer(this.openTopoMap);
+									this.map.removeLayer(this.openStreetMap);
+									this.map.removeLayer(this.sat);
+
+									this.map.addLayer(this.sat);
+								}
+								break;
+							case "OpenStreetMap":
+								{
+									this.map.removeLayer(this.openTopoMap);
+									this.map.removeLayer(this.openStreetMap);
+									this.map.removeLayer(this.sat);
+
+									this.map.addLayer(this.openStreetMap);
+								}
+								break;
+
+						}
+					}
+					break;
+				case '/Layers/Alpin Hut':
+					if (details.value) {
+						this.map.addLayer(this.alpine_hut);
+					} else {
+						this.map.removeLayer(this.alpine_hut);
+					}
+					break;
+				case '/Layers/Wilderness Hut':
+					if (details.value) {
+						this.map.addLayer(this.wilderness_hut);
+					} else {
+						this.map.removeLayer(this.wilderness_hut);
+					}
+					break;
+				case '/Layers/Guest House':
+					if (details.value) {
+						this.map.addLayer(this.guest_house);
+					} else {
+						this.map.removeLayer(this.guest_house);
+					}
+					break;
+				case '/Utility/Show Profile':
 					profileWindow.show();
 					break;
 
-				case 'show3dProfile':
-					var bounds = this.map.getBounds();
-					bounds.getSouthWest().lng
-					var boundingBox = new BoundingBox(bounds.getSouthWest().lng, bounds.getSouthWest().lat, bounds.getNorthEast().lng, bounds.getNorthEast().lat)
-					landscapeWindow3d.show();
-					landscapeWindow3dContent.show(boundingBox, 'https://opentopomap.org/{z}/{x}/{y}.png', this.featureCollection, this.map.getZoom());
+				case '/Utility/Show 3d-Graphic':
+					{
+						const bounds = this.map.getBounds();
+						bounds.getSouthWest().lng
+						const boundingBox = new BoundingBox(bounds.getSouthWest().lng, bounds.getSouthWest().lat, bounds.getNorthEast().lng, bounds.getNorthEast().lat)
+						landscapeWindow3d.show();
+
+						landscapeWindow3dContent.show(boundingBox, this.featureCollection, this.map.getZoom());
+
+						//landscapeWindow3dContent.show(boundingBox, 'https://opentopomap.org/{z}/{x}/{y}.png', this.featureCollection, this.map.getZoom());
+					}
 					break;
 
 
@@ -274,22 +424,24 @@ class LeafMapMain extends Component {
 			}
 		});
 
-		let contextMarkerMenu = this.shadowRoot.getElementById("contextMenuMarker");
+		const contextMarkerMenu = this.shadowRoot.getElementById("contextMenuMarker");
 		contextMarkerMenu.addEventListener('valueSelected', (e: CustomEvent) => {
-			var details: ContextEventResult = e.detail;
+			const details: ContextEventResult = e.detail;
 
 			switch (details.command) {
 				case 'delete':
-					var marker: Marker = details.ident;
+					{
+						const marker: Marker = details.ident;
 
-					var index = this.markers.indexOf(details.ident);
-					this._reducer.deleteMarker(index, { lonLatEle: { longitude: marker.getLatLng().lng, latitude: marker.getLatLng().lat } } as IMarker);
+						const index = this.markers.indexOf(details.ident);
+						this._reducer.deleteMarker(index, { lonLatEle: { longitude: marker.getLatLng().lng, latitude: marker.getLatLng().lat } } as IMarker);
 
-					var index = this.markers.indexOf(details.ident);
-					if (index > -1) {
-						(details.ident as Marker).remove();
-						this.markers.splice(index, 1);
-						//this.retrieveRoute();
+
+						if (index > -1) {
+							(details.ident as Marker).remove();
+							this.markers.splice(index, 1);
+							//this.retrieveRoute();
+						}
 					}
 					break;
 				case 'move':
@@ -307,7 +459,7 @@ class LeafMapMain extends Component {
 
 	}
 
-	getHTML() {
+	getHTML(): string {
 
 
 
@@ -330,7 +482,7 @@ class LeafMapMain extends Component {
         <div id='map'></div>
 
         <!-- Hamburger menu -->
-        <hamburger-menu-hide menu-entries={"Open%20gpx-file":"open","Save%20as%20gpx-file":"save","Delete%20all%20markers":"delAllMarkers","Switch%20on/off%20autoroute":"toggleAutoRoute","Switch%20on/off%20hiking%20tracks":"toggleHikingTracks","Show%20profile":"showProfile","Show%203dProfile":"show3dProfile"} ident="" id="hamburgerMenu"></hamburger-menu-hide>
+        <hamburger-menu-tree  id="hamburgerMenu"></hamburger-menu-tree>
         
         <!-- Context menu for the markers -->
         <context-menu-programmatical menu-entries={"Move":"move","Delete":"delete"}  id="contextMenuMarker"></context-menu-programmatical>
@@ -339,9 +491,14 @@ class LeafMapMain extends Component {
             <trail-profil slot='content'></trail-profil>
         </midi-window>
 
+		//FIXME
 		<midi-window id='3DLandscape', title="3DLandscape">
-            <three-landscape-shpere-element slot='content' id='3DLandscapeContent'></three-landscape-shpere-element>
+            <three-landscape-element slot='content' id='3DLandscapeContent'></three-landscape-element>
         </midi-window>
+
+		<!--midi-window id='3DLandscape', title="3DLandscape">
+            <three-landscape-shpere-element slot='content' id='3DLandscapeContent'></three-landscape-shpere-element>
+        </midi-window-->
 
         <file-dialog id="OpenGpxFileDialog"></file-dialog>
 
@@ -349,7 +506,7 @@ class LeafMapMain extends Component {
 	}
 
 
-	reduxtrigger(storeInstance) {
+	reduxtrigger(storeInstance): void {
 
 		if (!this.isConnected) {
 			this.reduxListenerUnsubsribe();
@@ -370,15 +527,16 @@ class LeafMapMain extends Component {
 				console.log("- save gpx");
 				break;
 			case MAP_MAIN_SET_DIRECTIONS:
-				console.log("- set directions");
-				var directions: DirectionsImpl = storeInstance.getState().directions;
-				// then update the map
-				this.geoJsonLayer.clearLayers();
-				this.geoJsonLayer.addData(FeatureCollectionImpl.getFeatureCollection(directions));
+				{
+					console.log("- set directions");
+					const directions: DirectionsImpl = storeInstance.getState().directions;
+					// then update the map
+					this.geoJsonLayer.clearLayers();
+					this.geoJsonLayer.addData(FeatureCollectionImpl.getFeatureCollection(directions));
 
 
-				this.featureCollection = FeatureCollectionImpl.getFeatureCollection(directions);
-
+					this.featureCollection = FeatureCollectionImpl.getFeatureCollection(directions);
+				}
 				break;
 			case MAP_MAIN_ADD_MARKER:
 				console.log("- add marker");
@@ -421,5 +579,5 @@ class LeafMapMain extends Component {
 }
 window.customElements.define('leaf-map-main', LeafMapMain);
 
-export { LeafMapMain };
+export { LeafMapMain, ACCESS_TOKEN };
 

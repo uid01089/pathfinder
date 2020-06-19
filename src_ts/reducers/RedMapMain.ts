@@ -52,7 +52,7 @@ interface ActionDeleteAllMarkers extends Action {
 }
 
 interface ActionToggleAutoRoute extends Action {
-
+    state: boolean;
 }
 
 interface ActionCompleteDirection extends Action {
@@ -137,7 +137,7 @@ class RedMapMain extends AbstractReducer<State> {
                         action: actionToogleAutoRoute.type,
                     });
 
-                    newStateToogleAutoRoute.programSetting.autoRouting = !newStateToogleAutoRoute.programSetting.autoRouting;
+                    newStateToogleAutoRoute.programSetting.autoRouting = actionToogleAutoRoute.state;
 
                     // Trigger route calculation
                     this.setDirectionsByMarkers(newStateToogleAutoRoute.markers, newStateToogleAutoRoute.programSetting.autoRouting, newStateToogleAutoRoute.programSetting.accessToken);
@@ -437,9 +437,10 @@ class RedMapMain extends AbstractReducer<State> {
         this.store.dispatch(actionFct);
     }
 
-    toggleAutoRoute() {
+    toggleAutoRoute(state: boolean) {
         const action: ActionToggleAutoRoute = {
-            type: MAP_MAIN_TOGGLE_AUTO_ROUTE
+            type: MAP_MAIN_TOGGLE_AUTO_ROUTE,
+            state: state
         };
         this.store.dispatch(action);
     }

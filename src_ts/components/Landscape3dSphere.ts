@@ -130,7 +130,7 @@ class Landscape3dSphere extends ReduxComponent<State> {
      * 
      * @param bBox 
      */
-    show(bBox: BoundingBox, tile: string, featureCollection: FeatureCollection, zoom: number) {
+    show(bBox: BoundingBox, featureCollection: FeatureCollection, zoom: number): void {
 
 
         this.scene = new THREE.Scene();
@@ -143,7 +143,7 @@ class Landscape3dSphere extends ReduxComponent<State> {
 
         this.setupCamera();
         this.addLights();
-        this.addGround(bBox, tile, featureCollection, zoom);
+        //this.addGround(bBox, tile, featureCollection, zoom);
 
 
 
