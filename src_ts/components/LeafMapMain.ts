@@ -1,6 +1,7 @@
 import { Component } from '../js_web_comp_lib/Component';
 import { CSS } from '../Css';
 import { Map, TileLayer, Marker, LeafletEventHandlerFn, LeafletMouseEvent } from 'leaflet';
+import { LayerStack } from '../GIS/leaflet/LayerStack';
 //import { Map, RasterDemSource, Layer, RasterSource, Marker, GeoJSONSource } from 'mapbox-gl';
 import * as L from 'leaflet';
 import { GeoJSON, LineString, FeatureCollection, Feature, Geometry } from 'geojson';
@@ -57,7 +58,7 @@ class LeafMapMain extends Component {
 	reduxListenerUnsubsribe: Function;
 	private mapBoxUtil: GISUtil;
 	geoJsonLayer: L.GeoJSON<any>;
-	waymarkedtrails: TileLayer;
+	waymarkedtrailsHiking: TileLayer;
 	featureCollection: FeatureCollectionImpl;
 	clouds: TileLayer.WMS;
 	rainRadar: TileLayer.WMS;
@@ -68,6 +69,16 @@ class LeafMapMain extends Component {
 	openTopoMap: CachedTileLayer;
 	sat: CachedTileLayer;
 	openStreetMap: CachedTileLayer;
+	bayernnetz_fuer_radler: TileLayer.WMS;
+	fernradwanderwege: TileLayer.WMS;
+	mountainbikewege: TileLayer.WMS;
+	radwanderwege: TileLayer.WMS;
+	wanderwege: TileLayer.WMS;
+	oertliche_wanderwege: TileLayer.WMS;
+	fernwanderwege: TileLayer.WMS;
+	waymarkedtrailsCycling: TileLayer;
+	waymarkedtrailsRiding: TileLayer;
+	layerStack: LayerStack;
 
 	constructor() {
 		super();
@@ -97,10 +108,7 @@ class LeafMapMain extends Component {
 
 		this.geoJsonLayer = L.geoJSON(geojson);
 
-		this.waymarkedtrails = new TileLayer('https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png', {
-			maxZoom: 18,
-			attribution: '<a href="https://hiking.waymarkedtrails.org/help/legal">waymarkedtrails.org</a>'
-		});
+
 
 
 
@@ -116,6 +124,10 @@ class LeafMapMain extends Component {
 
 		this.map = new Map(mapElement, {});
 
+		this.layerStack = new LayerStack(this.map);
+
+
+
 
 
 
@@ -129,21 +141,110 @@ class LeafMapMain extends Component {
 			maxZoom: 18,
 			attribution: '<a href="http://opentopomap.org">opentopomap.org</a>'
 		});
+		this.layerStack.addLayer(this.openTopoMap);
+		this.layerStack.showLayer(this.openTopoMap, true);
+
 
 		this.openStreetMap = new CachedTileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 			maxZoom: 18,
 			attribution: '<a href="http://openstreetmap.org">openstreetmap.org</a>'
 		});
+		this.layerStack.addLayer(this.openStreetMap);
+
+		this.sat = new CachedTileLayer('https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}{r}.webp?' + 'access_token=' + ACCESS_TOKEN);
+		this.layerStack.addLayer(this.sat);
 
 
-		// add the tile layer to the map
-		this.openTopoMap.addTo(this.map);
+		//https://geodatenonline.bayern.de/geodatenonline/seiten/wms_fzw
+		this.bayernnetz_fuer_radler = new TileLayer.WMS("http://www.geodaten.bayern.de/ogc/ogc_fzw_oa.cgi?", {
+			layers: "bayernnetz_fuer_radler",
+			format: 'image/png',
+			transparent: true,
+			attribution: '<a href="https://geodatenonline.bayern.de/geodatenonline/seiten/wms_fzw">geodatenonline.bayern.de</a>'
+		});
+		this.layerStack.addLayer(this.bayernnetz_fuer_radler);
+
+		//https://geodatenonline.bayern.de/geodatenonline/seiten/wms_fzw
+		this.fernradwanderwege = new TileLayer.WMS("http://www.geodaten.bayern.de/ogc/ogc_fzw_oa.cgi?", {
+			layers: "fernradwanderwege",
+			format: 'image/png',
+			transparent: true,
+			attribution: '<a href="https://geodatenonline.bayern.de/geodatenonline/seiten/wms_fzw">geodatenonline.bayern.de</a>'
+		});
+		this.layerStack.addLayer(this.fernradwanderwege);
+
+
+		//https://geodatenonline.bayern.de/geodatenonline/seiten/wms_fzw
+		this.mountainbikewege = new TileLayer.WMS("http://www.geodaten.bayern.de/ogc/ogc_fzw_oa.cgi?", {
+			layers: "mountainbikewege",
+			format: 'image/png',
+			transparent: true,
+			attribution: '<a href="https://geodatenonline.bayern.de/geodatenonline/seiten/wms_fzw">geodatenonline.bayern.de</a>'
+		});
+		this.layerStack.addLayer(this.mountainbikewege);
+
+		//https://geodatenonline.bayern.de/geodatenonline/seiten/wms_fzw
+		this.radwanderwege = new TileLayer.WMS("http://www.geodaten.bayern.de/ogc/ogc_fzw_oa.cgi?", {
+			layers: "radwanderwege",
+			format: 'image/png',
+			transparent: true,
+			attribution: '<a href="https://geodatenonline.bayern.de/geodatenonline/seiten/wms_fzw">geodatenonline.bayern.de</a>'
+		});
+		this.layerStack.addLayer(this.radwanderwege);
+
+		//https://geodatenonline.bayern.de/geodatenonline/seiten/wms_fzw
+		this.wanderwege = new TileLayer.WMS("http://www.geodaten.bayern.de/ogc/ogc_fzw_oa.cgi?", {
+			layers: "wanderwege",
+			format: 'image/png',
+			transparent: true,
+			attribution: '<a href="https://geodatenonline.bayern.de/geodatenonline/seiten/wms_fzw">geodatenonline.bayern.de</a>'
+		});
+		this.layerStack.addLayer(this.wanderwege);
+
+		//https://geodatenonline.bayern.de/geodatenonline/seiten/wms_fzw
+		this.fernwanderwege = new TileLayer.WMS("http://www.geodaten.bayern.de/ogc/ogc_fzw_oa.cgi?", {
+			layers: "fernwanderwege",
+			format: 'image/png',
+			transparent: true,
+			attribution: '<a href="https://geodatenonline.bayern.de/geodatenonline/seiten/wms_fzw">geodatenonline.bayern.de</a>'
+		});
+		this.layerStack.addLayer(this.fernwanderwege);
+
+		//https://geodatenonline.bayern.de/geodatenonline/seiten/wms_fzw
+		this.oertliche_wanderwege = new TileLayer.WMS("http://www.geodaten.bayern.de/ogc/ogc_fzw_oa.cgi?", {
+			layers: "oertliche_wanderwege",
+			format: 'image/png',
+			transparent: true,
+			attribution: '<a href="https://geodatenonline.bayern.de/geodatenonline/seiten/wms_fzw">geodatenonline.bayern.de</a>'
+		});
+		this.layerStack.addLayer(this.oertliche_wanderwege);
+
+
+		this.waymarkedtrailsHiking = new TileLayer('https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: '<a href="https://hiking.waymarkedtrails.org/help/legal">waymarkedtrails.org</a>'
+		});
+		this.layerStack.addLayer(this.waymarkedtrailsHiking);
+
+		this.waymarkedtrailsCycling = new TileLayer('https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: '<a href="https://hiking.waymarkedtrails.org/help/legal">waymarkedtrails.org</a>'
+		});
+		this.layerStack.addLayer(this.waymarkedtrailsCycling);
+
+		this.waymarkedtrailsRiding = new TileLayer('https://tile.waymarkedtrails.org/riding/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: '<a href="https://hiking.waymarkedtrails.org/help/legal">waymarkedtrails.org</a>'
+		});
+		this.layerStack.addLayer(this.waymarkedtrailsRiding);
 
 
 
 
 		//this.waymarkedtrails.addTo(this.map);
-		this.geoJsonLayer.addTo(this.map);
+		//this.geoJsonLayer.addTo(this.map);
+		this.layerStack.addLayer(this.geoJsonLayer);
+		this.layerStack.showLayer(this.geoJsonLayer, true);
 
 		// https://maps.dwd.de/geoserver/web/wicket/bookmarkable/org.geoserver.web.demo.MapPreviewPage?0
 		this.clouds = new TileLayer.WMS("https://maps.dwd.de/geoserver/dwd/wms?", {
@@ -152,6 +253,7 @@ class LeafMapMain extends Component {
 			transparent: true,
 			attribution: '<a href="https://maps.dwd.de/geoserver/web/">DWD-SAT_WELT_KOMPOSIT</a>'
 		});
+		this.layerStack.addLayer(this.clouds);
 
 		//satelitte.addTo(this.map);
 
@@ -162,24 +264,37 @@ class LeafMapMain extends Component {
 			transparent: true,
 			attribution: '<a href="https://maps.dwd.de/geoserver/web/">DWD-FX-Produkt</a>'
 		});
+		this.layerStack.addLayer(this.rainRadar);
+
+
+
+
+
+
+
+
+
 
 		//radar.addTo(this.map);
 
 		//fetch("https://api.mapbox.com/v4/mapbox.satellite/9/451/202@2x.webp?sku=1019o2oswGt40&access_token=pk.eyJ1IjoiZXhhbXBsZXMiLCJhIjoiY2p0MG01MXRqMW45cjQzb2R6b2ptc3J4MSJ9.zA2W0IkI0c6KaAhJfk9bWg", {
 
-		this.sat = new CachedTileLayer('https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}{r}.webp?' + 'access_token=' + ACCESS_TOKEN);
 
 
 
 
 
 		this.parkingLayer = new Overpass(12, './resources/marker-icon-park.png', 'amenity=parking');
+		this.layerStack.addLayer(this.parkingLayer);
 
 		this.alpine_hut = new Overpass(12, './resources/marker-icon-park.png', 'tourism=alpine_hut');
+		this.layerStack.addLayer(this.alpine_hut);
 
 		this.wilderness_hut = new Overpass(12, './resources/marker-icon-park.png', 'tourism=wilderness_hut');
+		this.layerStack.addLayer(this.wilderness_hut);
 
 		this.guest_house = new Overpass(12, './resources/marker-icon-park.png', 'tourism=guest_house');
+		this.layerStack.addLayer(this.guest_house);
 
 		const overlayPane = {
 
@@ -256,17 +371,52 @@ class LeafMapMain extends Component {
 				},
 				{
 					name: "Layers",
-					nodes: [],
+					nodes: [
+						{
+							name: "Geodaten-online",
+							nodes: [],
+							leafs:
+								[
+									{ name: "bayernnetz_fuer_radler", value: false } as CT_Switch,
+									{ name: "fernradwanderwege", value: false } as CT_Switch,
+									{ name: "fernwanderwege", value: false } as CT_Switch,
+									{ name: "mountainbikewege", value: false } as CT_Switch,
+									{ name: "radwanderwege", value: false } as CT_Switch,
+									{ name: "wanderwege", value: false } as CT_Switch,
+									{ name: "oertliche_wanderwege", value: false } as CT_Switch,
+								]
+						},
+						{
+							name: "DWD",
+							nodes: [],
+							leafs:
+								[
+									{ name: "Clouds", value: false } as CT_Switch,
+									{ name: "Raining", value: false } as CT_Switch,
+								]
+						},
+						{
+							name: "waymarkedtrails",
+							nodes: [],
+							leafs:
+								[
+									{ name: "Hiking tracks", value: false } as CT_Switch,
+									{ name: "Cycling tracks", value: false } as CT_Switch,
+									{ name: "Riding tracks", value: false } as CT_Switch,
+
+								]
+						},
+
+
+
+					],
 					leafs:
 						[
 							{ name: "Map", value: "TopoMap", valueCollection: ["TopoMap", "Satellite", "OpenStreetMap"] } as CT_Selection,
-							{ name: "Hiking tracks", value: false } as CT_Switch,
-							{ name: "Clouds", value: false } as CT_Switch,
-							{ name: "Raining", value: false } as CT_Switch,
 							{ name: "Parking", value: false } as CT_Switch,
 							{ name: "Alpin Hut", value: false } as CT_Switch,
 							{ name: "Wilderness Hut", value: false } as CT_Switch,
-							{ name: "Guest House", value: false } as CT_Switch,
+							{ name: "Guest House", value: false } as CT_Switch
 						]
 				},
 				{
@@ -319,63 +469,79 @@ class LeafMapMain extends Component {
 				case '/Routing/Automatic routing':
 					this._reducer.toggleAutoRoute(details.value as boolean);
 					break;
-				case '/Layers/Hiking tracks':
-					if (details.value) {
-						this.map.addLayer(this.waymarkedtrails);
-					} else {
-						this.map.removeLayer(this.waymarkedtrails);
-					}
+				case '/Layers/waymarkedtrails/Hiking tracks':
+					this.layerStack.showLayer(this.waymarkedtrailsHiking, details.value as boolean);
+
 					break;
-				case '/Layers/Clouds':
-					if (details.value) {
-						this.map.addLayer(this.clouds);
-					} else {
-						this.map.removeLayer(this.clouds);
-					}
+				case '/Layers/waymarkedtrails/Cycling tracks':
+					this.layerStack.showLayer(this.waymarkedtrailsCycling, details.value as boolean);
 					break;
-				case '/Layers/Raining':
-					if (details.value) {
-						this.map.addLayer(this.rainRadar);
-					} else {
-						this.map.removeLayer(this.rainRadar);
-					}
+				case '/Layers/waymarkedtrails/Riding tracks':
+					this.layerStack.showLayer(this.waymarkedtrailsRiding, details.value as boolean);
+
+					break;
+				case '/Layers/DWD/Clouds':
+					this.layerStack.showLayer(this.clouds, details.value as boolean);
+
+					break;
+				case '/Layers/DWD/Raining':
+					this.layerStack.showLayer(this.rainRadar, details.value as boolean);
+
 					break;
 				case '/Layers/Parking':
-					if (details.value) {
-						this.map.addLayer(this.parkingLayer);
-					} else {
-						this.map.removeLayer(this.parkingLayer);
-					}
+					this.layerStack.showLayer(this.parkingLayer, details.value as boolean);
+
+					break;
+				case '/Layers/Geodaten-online/bayernnetz_fuer_radler':
+					this.layerStack.showLayer(this.bayernnetz_fuer_radler, details.value as boolean);
+
+					break;
+				case '/Layers/Geodaten-online/fernradwanderwege':
+					this.layerStack.showLayer(this.fernradwanderwege, details.value as boolean);
+
+					break;
+				case '/Layers/Geodaten-online/fernwanderwege':
+					this.layerStack.showLayer(this.fernwanderwege, details.value as boolean);
+
+					break;
+				case '/Layers/Geodaten-online/mountainbikewege':
+					this.layerStack.showLayer(this.mountainbikewege, details.value as boolean);
+
+					break;
+				case '/Layers/Geodaten-online/radwanderwege':
+					this.layerStack.showLayer(this.radwanderwege, details.value as boolean);
+
+					break;
+				case '/Layers/Geodaten-online/wanderwege':
+					this.layerStack.showLayer(this.wanderwege, details.value as boolean);
+
+					break;
+				case '/Layers/Geodaten-online/oertliche_wanderwege':
+					this.layerStack.showLayer(this.oertliche_wanderwege, details.value as boolean);
+
 					break;
 				case '/Layers/Map':
 					{
 						switch (details.value) {
 							case "TopoMap":
 								{
-									this.map.removeLayer(this.openTopoMap);
-									this.map.removeLayer(this.openStreetMap);
-									this.map.removeLayer(this.sat);
-
-									this.map.addLayer(this.openTopoMap);
-
+									this.layerStack.showLayer(this.openTopoMap, true);
+									this.layerStack.showLayer(this.openStreetMap, false);
+									this.layerStack.showLayer(this.sat, false);
 								}
 								break;
 							case "Satellite":
 								{
-									this.map.removeLayer(this.openTopoMap);
-									this.map.removeLayer(this.openStreetMap);
-									this.map.removeLayer(this.sat);
-
-									this.map.addLayer(this.sat);
+									this.layerStack.showLayer(this.openTopoMap, false);
+									this.layerStack.showLayer(this.openStreetMap, false);
+									this.layerStack.showLayer(this.sat, true);
 								}
 								break;
 							case "OpenStreetMap":
 								{
-									this.map.removeLayer(this.openTopoMap);
-									this.map.removeLayer(this.openStreetMap);
-									this.map.removeLayer(this.sat);
-
-									this.map.addLayer(this.openStreetMap);
+									this.layerStack.showLayer(this.openTopoMap, false);
+									this.layerStack.showLayer(this.openStreetMap, true);
+									this.layerStack.showLayer(this.sat, false);
 								}
 								break;
 
@@ -383,25 +549,16 @@ class LeafMapMain extends Component {
 					}
 					break;
 				case '/Layers/Alpin Hut':
-					if (details.value) {
-						this.map.addLayer(this.alpine_hut);
-					} else {
-						this.map.removeLayer(this.alpine_hut);
-					}
+					this.layerStack.showLayer(this.alpine_hut, details.value as boolean);
+
 					break;
 				case '/Layers/Wilderness Hut':
-					if (details.value) {
-						this.map.addLayer(this.wilderness_hut);
-					} else {
-						this.map.removeLayer(this.wilderness_hut);
-					}
+					this.layerStack.showLayer(this.wilderness_hut, details.value as boolean);
+
 					break;
 				case '/Layers/Guest House':
-					if (details.value) {
-						this.map.addLayer(this.guest_house);
-					} else {
-						this.map.removeLayer(this.guest_house);
-					}
+					this.layerStack.showLayer(this.guest_house, details.value as boolean);
+
 					break;
 				case '/Utility/Show Profile':
 					profileWindow.show();
