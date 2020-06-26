@@ -6,6 +6,7 @@ import { LineChart, DataElement, LineChartSerie, ChartDataLine } from '../lib/co
 import { MAP_MAIN_COMPLETE_DIRECTIONS, MAP_MAIN_DELETE_ALL_MARKERS } from '../reducers/RedMapMain';
 import { DirectionsImpl } from '../GIS/Directions';
 import { Util } from '../lib/Util';
+import { MidiWindowEventResult } from '../lib/components/MidiWindow';
 
 
 
@@ -30,14 +31,21 @@ class TrailProfil extends LineChart {
 
     }
 
-    connectedCallback() {
+    connectedCallback(): void {
         super.connectedCallback();
         console.log('Trail Profil');
 
+        this.parentElement.addEventListener('midiWindowChanged', (e: CustomEvent) => {
+            // Update in case the MIDI-Window was changed
+            const details: MidiWindowEventResult = e.detail;
+            this.update();
+        });
+
+
     }
 
-    getHTML() {
-        var html = super.getHTML();
+    getHTML(): string {
+        let html = super.getHTML();
 
         html = html.concat(Component.html` 
         ${CSS}
@@ -51,12 +59,12 @@ class TrailProfil extends LineChart {
         return html;
     }
 
-    reduxtrigger(reduxStoreInstance) {
+    reduxtrigger(reduxStoreInstance): void {
         if (!this.isConnected) {
             this.reduxListenerUnsubsribe();
         }
 
-        var chartData: ChartDataLine = {
+        const chartData: ChartDataLine = {
             series: [{
                 name: "Distance",
                 data: [] as DataElement[]
@@ -66,27 +74,28 @@ class TrailProfil extends LineChart {
         switch (reduxStoreInstance.getState().action) {
 
             case MAP_MAIN_COMPLETE_DIRECTIONS:
-                console.log("+ complete direction");
-                var direction: DirectionsImpl = reduxStoreInstance.getState().directions;
+                {
+                    console.log("+ complete direction");
 
+                    const direction: DirectionsImpl = reduxStoreInstance.getState().directions;
 
+                    let distance = 0;
+                    direction.getCoordinates().forEach((coordinate) => {
 
-                var distance: number = 0;
-                direction.getCoordinates().forEach((coordinate) => {
+                        distance = distance + coordinate[3] / 1000;
 
-                    distance = distance + coordinate[3] / 1000;
+                        const dataElement: DataElement = {
+                            x: distance,
+                            y: coordinate[2]
+                        }
+                        chartData.series[0].data.push(dataElement);
+                    });
 
-                    var dataElement: DataElement = {
-                        x: distance,
-                        y: coordinate[2]
-                    }
-                    chartData.series[0].data.push(dataElement);
-                });
+                    chartData.series[0].name = "Distance: " + Util.round(distance, 100);
 
-                chartData.series[0].name = "Distance: " + Util.round(distance, 100);
-
-                this.setChartData(chartData);
-                this.update();
+                    this.setChartData(chartData);
+                    this.update();
+                }
 
                 break;
 
