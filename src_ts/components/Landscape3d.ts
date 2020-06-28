@@ -14,8 +14,11 @@ import { CanvasMap } from '../GIS/CanvasMap';
 import { FeatureCollection, LineString } from 'geojson';
 import { HamburgerMenuTree } from '../lib/components/HamburgerMenuTree';
 import '../lib/components/HamburgerMenuTree';
-import { CT_Config, ContextMenuTreeEventResult, CT_Selection } from '../lib/components/ContextMenuTree';
+import { CT_Config, ContextMenuTreeEventResult, CT_Selection, CT_Switch } from '../lib/components/ContextMenuTree';
 import '../lib/components/Loader';
+import { LayerStack } from '../GIS/leaflet/LayerStack';
+import { MidiWindowEventResult } from '../lib/components/MidiWindow';
+
 
 
 class Landscape3dReducer extends AbstractReducer<State> {
@@ -32,8 +35,14 @@ const ACCESS_TOKEN = 'pk.eyJ1IjoidWlkMDEwODkiLCJhIjoiY2p6M295MGs2MDVkMDNwb2N5MHl
 
 
 const TOPOMAP_TILE = 'https://opentopomap.org/{z}/{x}/{y}.png';
-const SATELLITE_TILE = 'https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}.webp?' + 'access_token=' + ACCESS_TOKEN;
+const MAPBOX_SATELLITE_TILE = 'https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}.webp?' + 'access_token=' + ACCESS_TOKEN;
 const OPENSTREETMAP_TILE = 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png';
+const WAY_MARKET_TRAILS_HIKING = 'https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png';
+const WAY_MARKET_TRAILS_CYCLING = 'https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png';
+const WAY_MARKET_TRAILS_RIDING = 'https://tile.waymarkedtrails.org/riding/{z}/{x}/{y}.png';
+const GOOGLE_HYPRID_TILE = 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}';
+const GOOGLE_SATELLITE_TILE = 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}';
+
 
 
 class Landscape3d extends ReduxComponent<State> {
@@ -44,14 +53,11 @@ class Landscape3d extends ReduxComponent<State> {
     bBox: BoundingBox;
     featureCollection: any;
     zoom: number;
-    tile: string;
+    layerStack: LayerStack<string>;
 
 
     constructor() {
         super(new Landscape3dReducer(), reduxStoreInstance);
-
-
-
 
     }
 
@@ -63,7 +69,12 @@ class Landscape3d extends ReduxComponent<State> {
     connectedCallback(): void {
         super.connectedCallback();
 
-        this.tile = TOPOMAP_TILE;
+        this.parentElement.addEventListener('midiWindowChanged', (e: CustomEvent) => {
+            // Update in case the MIDI-Window was changed
+            const details: MidiWindowEventResult = e.detail;
+            //FIXME
+            //this.update();
+        });
     }
 
     /**
@@ -81,6 +92,17 @@ class Landscape3d extends ReduxComponent<State> {
         this.renderer = new THREE.WebGLRenderer({ canvas: canvas } as WebGLRendererParameters);
         this.camera = new THREE.PerspectiveCamera(75, canvas.offsetWidth / canvas.offsetHeight, 0.1, 10000);
 
+        this.layerStack = new LayerStack({ addLayerOperation: null, removeLayerOperation: null, updateFinishedOperation: null })
+        this.layerStack.addLayer(TOPOMAP_TILE);
+        this.layerStack.showLayer(TOPOMAP_TILE, true);
+        this.layerStack.addLayer(MAPBOX_SATELLITE_TILE);
+        this.layerStack.addLayer(OPENSTREETMAP_TILE);
+        this.layerStack.addLayer(GOOGLE_HYPRID_TILE);
+        this.layerStack.addLayer(GOOGLE_SATELLITE_TILE);
+        this.layerStack.addLayer(WAY_MARKET_TRAILS_CYCLING);
+        this.layerStack.addLayer(WAY_MARKET_TRAILS_HIKING);
+        this.layerStack.addLayer(WAY_MARKET_TRAILS_RIDING);
+
 
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
 
@@ -88,19 +110,36 @@ class Landscape3d extends ReduxComponent<State> {
 
 
 
+
         const config: CT_Config = {
             nodes: [
                 {
                     name: "Map",
-                    nodes: [],
-                    leafs:
-                        [
-                            { name: "Map", value: "TopoMap", valueCollection: ["TopoMap", "Satellite", "OpenStreetMap"] } as CT_Selection,
-                        ]
-                }],
-            leafs: [
+                    nodes: [{
+                        name: "Layers",
+                        nodes: [
 
-            ]
+                            {
+                                name: "waymarkedtrails",
+                                nodes: [],
+                                leafs:
+                                    [
+                                        { name: "Hiking tracks", value: false } as CT_Switch,
+                                        { name: "Cycling tracks", value: false } as CT_Switch,
+                                        { name: "Riding tracks", value: false } as CT_Switch,
+
+                                    ]
+                            },
+                        ],
+                        leafs:
+                            [
+                            ]
+                    }],
+                    leafs: [
+                        { name: "Map", value: "TopoMap", valueCollection: ["TopoMap", "Mapbox Satellite", "OpenStreetMap", "Google Satellite", "Google Hyprid"] } as CT_Selection,
+
+                    ]
+                }], leafs: []
         };
 
         contextHamburgerMenu.setConfig(config);
@@ -115,24 +154,78 @@ class Landscape3d extends ReduxComponent<State> {
                         switch (details.value) {
                             case "TopoMap":
                                 {
-                                    this.tile = TOPOMAP_TILE;
+                                    this.layerStack.showLayer(TOPOMAP_TILE, true);
+                                    this.layerStack.showLayer(MAPBOX_SATELLITE_TILE, false);
+                                    this.layerStack.showLayer(OPENSTREETMAP_TILE, false);
+                                    this.layerStack.showLayer(GOOGLE_SATELLITE_TILE, false);
+                                    this.layerStack.showLayer(GOOGLE_HYPRID_TILE, false);
                                     this.updateShow();
                                 }
                                 break;
-                            case "Satellite":
+                            case "Mapbox Satellite":
                                 {
-                                    this.tile = SATELLITE_TILE;
+                                    this.layerStack.showLayer(TOPOMAP_TILE, false);
+                                    this.layerStack.showLayer(MAPBOX_SATELLITE_TILE, true);
+                                    this.layerStack.showLayer(OPENSTREETMAP_TILE, false);
+                                    this.layerStack.showLayer(GOOGLE_SATELLITE_TILE, false);
+                                    this.layerStack.showLayer(GOOGLE_HYPRID_TILE, false);
                                     this.updateShow();
                                 }
                                 break;
                             case "OpenStreetMap":
                                 {
-                                    this.tile = OPENSTREETMAP_TILE;
+                                    this.layerStack.showLayer(TOPOMAP_TILE, false);
+                                    this.layerStack.showLayer(MAPBOX_SATELLITE_TILE, false);
+                                    this.layerStack.showLayer(OPENSTREETMAP_TILE, true);
+                                    this.layerStack.showLayer(GOOGLE_SATELLITE_TILE, false);
+                                    this.layerStack.showLayer(GOOGLE_HYPRID_TILE, false);
+
                                     this.updateShow();
                                 }
                                 break;
+                            case "Google Satellite":
+                                {
+                                    this.layerStack.showLayer(TOPOMAP_TILE, false);
+                                    this.layerStack.showLayer(MAPBOX_SATELLITE_TILE, false);
+                                    this.layerStack.showLayer(OPENSTREETMAP_TILE, false);
+                                    this.layerStack.showLayer(GOOGLE_SATELLITE_TILE, true);
+                                    this.layerStack.showLayer(GOOGLE_HYPRID_TILE, false);
+
+                                    this.updateShow();
+                                }
+                                break;
+                            case "Google Hyprid":
+                                {
+                                    this.layerStack.showLayer(TOPOMAP_TILE, false);
+                                    this.layerStack.showLayer(MAPBOX_SATELLITE_TILE, false);
+                                    this.layerStack.showLayer(OPENSTREETMAP_TILE, false);
+                                    this.layerStack.showLayer(GOOGLE_SATELLITE_TILE, false);
+                                    this.layerStack.showLayer(GOOGLE_HYPRID_TILE, true);
+
+                                    this.updateShow();
+                                }
 
                         }
+                    }
+                    break;
+                case '/Map/Layers/waymarkedtrails/Hiking tracks':
+                    {
+                        this.layerStack.showLayer(WAY_MARKET_TRAILS_HIKING, details.value as boolean);
+                        this.updateShow();
+                    }
+                    break;
+                case '/Map/Layers/waymarkedtrails/Cycling tracks':
+                    {
+                        this.layerStack.showLayer(WAY_MARKET_TRAILS_CYCLING, details.value as boolean);
+                        this.updateShow();
+
+                    }
+                    break;
+                case '/Map/Layers/waymarkedtrails/Riding tracks':
+                    {
+                        this.layerStack.showLayer(WAY_MARKET_TRAILS_RIDING, details.value as boolean);
+                        this.updateShow();
+
                     }
                     break;
                 default:
@@ -221,7 +314,7 @@ class Landscape3d extends ReduxComponent<State> {
 
         this.setupCamera();
         this.addLights();
-        const promise = this.addGround(bBox, this.tile, featureCollection, zoom);
+        const promise = this.addGround(bBox, featureCollection, zoom);
         promise.then(() => {
             this.render();
 
@@ -245,9 +338,14 @@ class Landscape3d extends ReduxComponent<State> {
 
 
 
-    private async addGround(bBox: BoundingBox, tile: string, featureCollection: FeatureCollection, zoom: number): Promise<void> {
+    private async addGround(bBox: BoundingBox, featureCollection: FeatureCollection, zoom: number): Promise<void> {
 
-        const canvasMap = new CanvasMap(bBox, zoom, tile);
+        const canvasMap = new CanvasMap(bBox, zoom);
+
+        // Add all tiles step by step
+        await canvasMap.addTiles(this.layerStack);
+
+        // add the Track at last level
         await canvasMap.addFeature(featureCollection as FeatureCollection<LineString>);
         const canvas = await canvasMap.getCanvas();
         const bBoxCanvas = canvasMap.getBoundingBox();

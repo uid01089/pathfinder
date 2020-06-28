@@ -1,6 +1,6 @@
 import { Component } from '../js_web_comp_lib/Component';
 import { CSS } from '../Css';
-import { Map, TileLayer, Marker, LeafletEventHandlerFn, LeafletMouseEvent } from 'leaflet';
+import { Map, TileLayer, Layer, Marker, LeafletEventHandlerFn, LeafletMouseEvent } from 'leaflet';
 import { LayerStack } from '../GIS/leaflet/LayerStack';
 //import { Map, RasterDemSource, Layer, RasterSource, Marker, GeoJSONSource } from 'mapbox-gl';
 import * as L from 'leaflet';
@@ -67,7 +67,7 @@ class LeafMapMain extends Component {
 	wilderness_hut: Overpass;
 	guest_house: Overpass;
 	openTopoMap: CachedTileLayer;
-	sat: CachedTileLayer;
+	mapboxSat: CachedTileLayer;
 	openStreetMap: CachedTileLayer;
 	bayernnetz_fuer_radler: TileLayer.WMS;
 	fernradwanderwege: TileLayer.WMS;
@@ -78,7 +78,9 @@ class LeafMapMain extends Component {
 	fernwanderwege: TileLayer.WMS;
 	waymarkedtrailsCycling: TileLayer;
 	waymarkedtrailsRiding: TileLayer;
-	layerStack: LayerStack;
+	layerStack: LayerStack<Layer>;
+	googleSatMap: CachedTileLayer;
+	googleHybMap: CachedTileLayer;
 
 	constructor() {
 		super();
@@ -124,10 +126,13 @@ class LeafMapMain extends Component {
 
 		this.map = new Map(mapElement, {});
 
-		this.layerStack = new LayerStack(this.map);
-
-
-
+		this.layerStack = new LayerStack({
+			addLayerOperation: (layer) => {
+				this.map.addLayer(layer);
+			}, removeLayerOperation: (layer) => {
+				this.map.removeLayer(layer)
+			}, updateFinishedOperation: null
+		});
 
 
 
@@ -137,6 +142,8 @@ class LeafMapMain extends Component {
 
 
 		// create a tileLayer with the tiles, attribution
+
+
 		this.openTopoMap = new CachedTileLayer('https://opentopomap.org/{z}/{x}/{y}.png', {
 			maxZoom: 18,
 			attribution: '<a href="http://opentopomap.org">opentopomap.org</a>'
@@ -145,14 +152,34 @@ class LeafMapMain extends Component {
 		this.layerStack.showLayer(this.openTopoMap, true);
 
 
+
 		this.openStreetMap = new CachedTileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 			maxZoom: 18,
 			attribution: '<a href="http://openstreetmap.org">openstreetmap.org</a>'
 		});
 		this.layerStack.addLayer(this.openStreetMap);
 
-		this.sat = new CachedTileLayer('https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}{r}.webp?' + 'access_token=' + ACCESS_TOKEN);
-		this.layerStack.addLayer(this.sat);
+
+		//https://baumsicht.de/google-maps-ohne-plugin-in-qgis-verwenden/
+		this.googleSatMap = new CachedTileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+			maxZoom: 18,
+			attribution: '<a href="http://google.com">google.com</a>'
+		});
+		this.layerStack.addLayer(this.googleSatMap);
+
+		//https://baumsicht.de/google-maps-ohne-plugin-in-qgis-verwenden/
+		this.googleHybMap = new CachedTileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+			maxZoom: 18,
+			attribution: '<a href="http://google.com">google.com</a>'
+		});
+		this.layerStack.addLayer(this.googleHybMap);
+
+
+		this.mapboxSat = new CachedTileLayer('https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}{r}.webp?' + 'access_token=' + ACCESS_TOKEN, {
+			maxZoom: 18,
+			attribution: '<a href="http://mapbox.com">mapbox.com</a>'
+		});
+		this.layerStack.addLayer(this.mapboxSat);
 
 
 		//https://geodatenonline.bayern.de/geodatenonline/seiten/wms_fzw
@@ -267,23 +294,6 @@ class LeafMapMain extends Component {
 		this.layerStack.addLayer(this.rainRadar);
 
 
-
-
-
-
-
-
-
-
-		//radar.addTo(this.map);
-
-		//fetch("https://api.mapbox.com/v4/mapbox.satellite/9/451/202@2x.webp?sku=1019o2oswGt40&access_token=pk.eyJ1IjoiZXhhbXBsZXMiLCJhIjoiY2p0MG01MXRqMW45cjQzb2R6b2ptc3J4MSJ9.zA2W0IkI0c6KaAhJfk9bWg", {
-
-
-
-
-
-
 		this.parkingLayer = new Overpass(12, './resources/marker-icon-park.png', 'amenity=parking');
 		this.layerStack.addLayer(this.parkingLayer);
 
@@ -295,17 +305,6 @@ class LeafMapMain extends Component {
 
 		this.guest_house = new Overpass(12, './resources/marker-icon-park.png', 'tourism=guest_house');
 		this.layerStack.addLayer(this.guest_house);
-
-		const overlayPane = {
-
-
-		};
-
-		// Add a layer control element to the map
-		const layerControl = L.control.layers(null, overlayPane);
-		//layerControl.addTo(this.map);
-
-		//L.control.geocoder().addTo(this.map);
 
 		L.control.scale().addTo(this.map);
 
@@ -412,7 +411,7 @@ class LeafMapMain extends Component {
 					],
 					leafs:
 						[
-							{ name: "Map", value: "TopoMap", valueCollection: ["TopoMap", "Satellite", "OpenStreetMap"] } as CT_Selection,
+							{ name: "Map", value: "TopoMap", valueCollection: ["TopoMap", "OpenStreetMap", "Mapbox Satellite", "Google Satellite", "Google Hyprid"] } as CT_Selection,
 							{ name: "Parking", value: false } as CT_Switch,
 							{ name: "Alpin Hut", value: false } as CT_Switch,
 							{ name: "Wilderness Hut", value: false } as CT_Switch,
@@ -527,24 +526,47 @@ class LeafMapMain extends Component {
 								{
 									this.layerStack.showLayer(this.openTopoMap, true);
 									this.layerStack.showLayer(this.openStreetMap, false);
-									this.layerStack.showLayer(this.sat, false);
+									this.layerStack.showLayer(this.mapboxSat, false);
+									this.layerStack.showLayer(this.googleHybMap, false);
+									this.layerStack.showLayer(this.googleSatMap, false);
 								}
 								break;
-							case "Satellite":
+							case "Mapbox Satellite":
 								{
 									this.layerStack.showLayer(this.openTopoMap, false);
 									this.layerStack.showLayer(this.openStreetMap, false);
-									this.layerStack.showLayer(this.sat, true);
+									this.layerStack.showLayer(this.mapboxSat, true);
+									this.layerStack.showLayer(this.googleHybMap, false);
+									this.layerStack.showLayer(this.googleSatMap, false);
 								}
 								break;
 							case "OpenStreetMap":
 								{
 									this.layerStack.showLayer(this.openTopoMap, false);
 									this.layerStack.showLayer(this.openStreetMap, true);
-									this.layerStack.showLayer(this.sat, false);
+									this.layerStack.showLayer(this.mapboxSat, false);
+									this.layerStack.showLayer(this.googleHybMap, false);
+									this.layerStack.showLayer(this.googleSatMap, false);
 								}
 								break;
-
+							case "Google Satellite":
+								{
+									this.layerStack.showLayer(this.openTopoMap, false);
+									this.layerStack.showLayer(this.openStreetMap, false);
+									this.layerStack.showLayer(this.mapboxSat, false);
+									this.layerStack.showLayer(this.googleHybMap, false);
+									this.layerStack.showLayer(this.googleSatMap, true);
+								}
+								break;
+							case "Google Hyprid":
+								{
+									this.layerStack.showLayer(this.openTopoMap, false);
+									this.layerStack.showLayer(this.openStreetMap, false);
+									this.layerStack.showLayer(this.mapboxSat, false);
+									this.layerStack.showLayer(this.googleHybMap, true);
+									this.layerStack.showLayer(this.googleSatMap, false);
+								}
+								break;
 						}
 					}
 					break;
