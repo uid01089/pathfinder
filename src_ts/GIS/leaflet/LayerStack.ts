@@ -1,18 +1,32 @@
-import { Map as LMap, Layer } from 'leaflet';
+import { Layer } from 'leaflet';
 
-class LayerStack {
-    private map: LMap;
-    private layers: Map<Layer, boolean> = new Map();
+type LayerTypes = Layer | string;
 
-    constructor(map: LMap) {
-        this.map = map;
+type AddLayerOperation<T extends LayerTypes> = (layer: T) => void;
+type RemoveLayerOperation<T extends LayerTypes> = (layer: T) => void;
+type UpdateFinishedOperation = () => void;
+interface LayerStackParameters<T extends LayerTypes> {
+    addLayerOperation: AddLayerOperation<T>;
+    removeLayerOperation: RemoveLayerOperation<T>;
+    updateFinishedOperation: UpdateFinishedOperation;
+}
+
+class LayerStack<T extends LayerTypes>{
+
+
+    private layerStackParameters: LayerStackParameters<T>;
+    private layers: Map<T, boolean> = new Map();
+
+    constructor(layerStackParameters: LayerStackParameters<T>) {
+        this.layerStackParameters = layerStackParameters;
+
     }
 
-    public addLayer(layer: Layer): void {
+    public addLayer(layer: T): void {
         this.layers.set(layer, false);
     }
 
-    public showLayer(layer: Layer, state: boolean): void {
+    public showLayer(layer: T, state: boolean): void {
         const particularLayer = this.layers.get(layer);
         if (undefined === particularLayer) {
             throw new Error("Layer not exists");
@@ -26,13 +40,32 @@ class LayerStack {
 
     private updateView(): void {
         this.layers.forEach((state, layer) => {
-            this.map.removeLayer(layer);
+
+            if (null !== this.layerStackParameters.removeLayerOperation) { this.layerStackParameters.removeLayerOperation(layer); }
             if (state) {
-                this.map.addLayer(layer);
+                if (null !== this.layerStackParameters.addLayerOperation) { this.layerStackParameters.addLayerOperation(layer); }
             }
-        })
+        });
+
+        if (null !== this.layerStackParameters.updateFinishedOperation) { this.layerStackParameters.updateFinishedOperation(); }
+
+
 
     }
+
+    public getValidLayers(): T[] {
+        const validLayers: T[] = []
+
+        this.layers.forEach((state, layer) => {
+            if (state) {
+                validLayers.push(layer);
+            }
+        });
+
+        return validLayers;
+    }
+
+
 }
 
-export { LayerStack };
+export { LayerStack, AddLayerOperation, RemoveLayerOperation, LayerStackParameters, UpdateFinishedOperation };
