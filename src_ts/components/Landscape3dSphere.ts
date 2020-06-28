@@ -153,8 +153,9 @@ class Landscape3dSphere extends ReduxComponent<State> {
 
     private async addGround(bBox: BoundingBox, tile: string, featureCollection: FeatureCollection, zoom: number) {
 
-        var canvasMap = new CanvasMap(bBox, zoom, tile);
-        canvasMap.addFeature(featureCollection as FeatureCollection<LineString>);
+        var canvasMap = new CanvasMap(bBox, zoom);
+        await canvasMap.addTile(tile);
+        await canvasMap.addFeature(featureCollection as FeatureCollection<LineString>);
         var canvas = await canvasMap.getCanvas();
         let bBoxCanvas = canvasMap.getBoundingBox();
 
