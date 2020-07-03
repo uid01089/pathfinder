@@ -13,13 +13,12 @@ class ElevationMapBoxTile implements ElevationProvider {
 
 
 
-    public async getElevation(coordinate: LonLatEle, accessToken: string): Promise<number> {
+    public async getElevation(coordinate: LonLatEle, accessToken: string, zoom: number): Promise<number> {
 
         //var worker = new Worker("./ElevationWorker.ts", { type: "module" });
 
 
         // Retrieve picture with elevation coded as RGB
-        const zoom = 13;
         const mapBoxUtil = new GISUtil();
         const tailInfo = mapBoxUtil.getTailInfo(coordinate.longitude, coordinate.latitude, zoom);
         const url = 'https://api.mapbox.com/v4/mapbox.terrain-rgb/' + zoom + '/' + tailInfo.xTile + '/' + tailInfo.yTile + '.pngraw?access_token=' + accessToken;

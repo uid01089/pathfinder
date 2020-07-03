@@ -28,8 +28,7 @@ import { MidiWindow } from '../lib/components/MidiWindow';
 import { Landscape3d } from './Landscape3d';
 import './Landscape3d';
 
-import { Landscape3dSphere } from './Landscape3dSphere';
-import './Landscape3dSphere';
+
 
 
 import { BoundingBox } from '../GIS/BoundingBox';
@@ -37,6 +36,7 @@ import { HamburgerMenuTree } from '../lib/components/HamburgerMenuTree';
 import { CT_Config, CT_Button, CT_Selection, CT_Switch, ContextMenuTreeEventResult } from '../lib/components/ContextMenuTree';
 
 
+import './Impressum';
 
 
 
@@ -319,12 +319,12 @@ class LeafMapMain extends Component {
 
 			marker.on('dragend', (e) => {
 				//this.retrieveRoute();
-				this._reducer.changeMarker(this.markers.indexOf(marker), { lonLatEle: { longitude: marker.getLatLng().lng, latitude: marker.getLatLng().lat } } as IMarker);
+				this._reducer.changeMarker(this.markers.indexOf(marker), { lonLatEle: { longitude: marker.getLatLng().lng, latitude: marker.getLatLng().lat } } as IMarker, this.map.getZoom());
 			});
 
 			// Add it to the marker collection
 			this.markers.push(marker);
-			this._reducer.addMarker({ lonLatEle: { longitude: marker.getLatLng().lng, latitude: marker.getLatLng().lat } } as IMarker);
+			this._reducer.addMarker({ lonLatEle: { longitude: marker.getLatLng().lng, latitude: marker.getLatLng().lat } } as IMarker, this.map.getZoom());
 
 
 			marker.addTo(this.map);
@@ -347,9 +347,12 @@ class LeafMapMain extends Component {
 		const profileWindow = this.shadowRoot.getElementById("ProfileWindow") as MidiWindow;
 		profileWindow.hide();
 
+		const impressumWindow = this.shadowRoot.getElementById("Impressum") as MidiWindow;
+		impressumWindow.hide();
+
 		const landscapeWindow3d = this.shadowRoot.getElementById("3DLandscape") as MidiWindow;
 		landscapeWindow3d.hide();
-		const landscapeWindow3dContent = this.shadowRoot.getElementById("3DLandscapeContent") as Landscape3dSphere;
+		const landscapeWindow3dContent = this.shadowRoot.getElementById("3DLandscapeContent") as Landscape3d;
 
 
 
@@ -437,6 +440,7 @@ class LeafMapMain extends Component {
 						]
 				}],
 			leafs: [
+				{ name: "Impressum" } as CT_Button
 
 			]
 		};
@@ -454,19 +458,33 @@ class LeafMapMain extends Component {
 					{
 						const fileDialog = this.shadowRoot.getElementById("OpenGpxFileDialog") as FileDialog;
 						fileDialog.show((files) => {
-							this._reducer.openGpxFile(files);
+							this._reducer.openGpxFile(files, this.map.getZoom());
 						});
 					}
 
 					break;
 				case '/File operations/Save GPX file':
-					this._reducer.saveGpxFile();
+					{
+						const fileName = prompt("Name of the file?", "route.gpx");
+						if (null != fileName) {
+							const iMarkers: IMarker[] = [];
+							this.markers.forEach((marker) => {
+								iMarkers.push({ lonLatEle: { latitude: marker.getLatLng().lat, longitude: marker.getLatLng().lng, elevation: marker.getLatLng().alt } });
+							})
+							this._reducer.saveGpxFile(fileName, iMarkers);
+
+						}
+
+
+					}
+
+
 					break;
 				case '/Routing/Delete all markers':
-					this._reducer.delAllMarkers();
+					this._reducer.delAllMarkers(this.map.getZoom());
 					break;
 				case '/Routing/Automatic routing':
-					this._reducer.toggleAutoRoute(details.value as boolean);
+					this._reducer.toggleAutoRoute(details.value as boolean, this.map.getZoom());
 					break;
 				case '/Layers/waymarkedtrails/Hiking tracks':
 					this.layerStack.showLayer(this.waymarkedtrailsHiking, details.value as boolean);
@@ -595,7 +613,11 @@ class LeafMapMain extends Component {
 
 						landscapeWindow3dContent.show(boundingBox, this.featureCollection, this.map.getZoom());
 
-						//landscapeWindow3dContent.show(boundingBox, 'https://opentopomap.org/{z}/{x}/{y}.png', this.featureCollection, this.map.getZoom());
+					}
+					break;
+				case '/Impressum':
+					{
+						impressumWindow.show();
 					}
 					break;
 
@@ -615,7 +637,7 @@ class LeafMapMain extends Component {
 						const marker: Marker = details.ident;
 
 						const index = this.markers.indexOf(details.ident);
-						this._reducer.deleteMarker(index, { lonLatEle: { longitude: marker.getLatLng().lng, latitude: marker.getLatLng().lat } } as IMarker);
+						this._reducer.deleteMarker(index, { lonLatEle: { longitude: marker.getLatLng().lng, latitude: marker.getLatLng().lat } } as IMarker, this.map.getZoom());
 
 
 						if (index > -1) {
@@ -672,7 +694,7 @@ class LeafMapMain extends Component {
             <trail-profil slot='content'></trail-profil>
         </midi-window>
 
-		//FIXME
+		
 		<midi-window id='3DLandscape', title="3DLandscape">
             <three-landscape-element slot='content' id='3DLandscapeContent'></three-landscape-element>
         </midi-window>
@@ -680,6 +702,11 @@ class LeafMapMain extends Component {
 		<!--midi-window id='3DLandscape', title="3DLandscape">
             <three-landscape-shpere-element slot='content' id='3DLandscapeContent'></three-landscape-shpere-element>
         </midi-window-->
+
+		<midi-window id='Impressum', title="Impressum">
+            <impressum-element slot='content' id='ImpressumContent'></impressum-element>
+        </midi-window>
+
 
         <file-dialog id="OpenGpxFileDialog"></file-dialog>
 

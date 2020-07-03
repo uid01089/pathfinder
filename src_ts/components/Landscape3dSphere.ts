@@ -14,6 +14,7 @@ import { CanvasMap } from '../GIS/CanvasMap';
 import { FeatureCollection, LineString } from 'geojson';
 import { GISUtil } from '../GIS/GISUtil';
 import { Point } from 'leaflet';
+import { LayerStack } from '../GIS/leaflet/LayerStack';
 
 interface PointXYZ {
     x: number,
@@ -33,12 +34,15 @@ class Landscape3dSphereReducer extends AbstractReducer<State> {
 
 const EARTHRADIUS = 6371000;
 const ZOOM = 0.01;
+const TOPOMAP_TILE = 'https://opentopomap.org/{z}/{x}/{y}.png';
+
 
 class Landscape3dSphere extends ReduxComponent<State> {
     renderer: THREE.WebGLRenderer;
     camera: THREE.PerspectiveCamera;
     controls: OrbitControls;
     scene: THREE.Scene;
+    layerStack: LayerStack<string>;
 
 
     constructor() {
@@ -65,10 +69,10 @@ class Landscape3dSphere extends ReduxComponent<State> {
      *
      * @memberof Component
      */
-    registerCallBack() {
+    registerCallBack(): void {
         super.registerCallBack();
 
-        let canvas = this.shadowRoot.getElementById("Canvas") as HTMLCanvasElement;
+        const canvas = this.shadowRoot.getElementById("Canvas") as HTMLCanvasElement;
 
 
 
@@ -79,6 +83,9 @@ class Landscape3dSphere extends ReduxComponent<State> {
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
 
 
+        this.layerStack = new LayerStack({ addLayerOperation: null, removeLayerOperation: null, updateFinishedOperation: null })
+        this.layerStack.addLayer(TOPOMAP_TILE);
+        this.layerStack.showLayer(TOPOMAP_TILE, true);
 
 
 
@@ -89,7 +96,7 @@ class Landscape3dSphere extends ReduxComponent<State> {
     /**
      * Returns the HTML from which a template shall be created
      */
-    getHTML() {
+    getHTML(): string {
 
         return ReduxComponent.html` 
         ${CSS}
@@ -115,7 +122,7 @@ class Landscape3dSphere extends ReduxComponent<State> {
      * This operation is called by Redux
      * @param reduxStore 
      */
-    triggeredFromRedux(reduxStore: AbstractReduxStore<State>) {
+    triggeredFromRedux(reduxStore: AbstractReduxStore<State>): void {
 
         super.triggeredFromRedux(reduxStore);
 
@@ -123,7 +130,7 @@ class Landscape3dSphere extends ReduxComponent<State> {
         // meaning update UI :-)
         switch (reduxStore.getState().action) {
             default:
-        };
+        }
     }
 
     /**
@@ -136,9 +143,9 @@ class Landscape3dSphere extends ReduxComponent<State> {
         this.scene = new THREE.Scene();
 
 
-        var geometry = new THREE.BoxGeometry(1, 1, 1);
-        var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-        var cube = new THREE.Mesh(geometry, material);
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const cube = new THREE.Mesh(geometry, material);
         this.scene.add(cube);
 
         this.setupCamera();
@@ -153,11 +160,11 @@ class Landscape3dSphere extends ReduxComponent<State> {
 
     private async addGround(bBox: BoundingBox, tile: string, featureCollection: FeatureCollection, zoom: number) {
 
-        var canvasMap = new CanvasMap(bBox, zoom);
-        await canvasMap.addTile(tile);
-        await canvasMap.addFeature(featureCollection as FeatureCollection<LineString>);
-        var canvas = await canvasMap.getCanvas();
-        let bBoxCanvas = canvasMap.getBoundingBox();
+        const canvasMap = new CanvasMap(bBox, zoom);
+        await canvasMap.addTiles(this.layerStack);
+        await canvasMap.addFeature(featureCollection as FeatureCollection<LineString>, zoom);
+        const canvas = await canvasMap.getCanvas();
+        const bBoxCanvas = canvasMap.getBoundingBox();
 
 
         const RASTER = 200;
@@ -165,8 +172,8 @@ class Landscape3dSphere extends ReduxComponent<State> {
 
 
 
-        var dimension = await bBoxCanvas.getDimensions();
-        let zoomLevel = SIZE / dimension.y;
+        const dimension = await bBoxCanvas.getDimensions(zoom);
+        const zoomLevel = SIZE / dimension.y;
 
         /*
             PlaneGeometry(width : Float, height : Float, widthSegments : Integer, heightSegments : Integer)
@@ -195,35 +202,35 @@ class Landscape3dSphere extends ReduxComponent<State> {
             to define the points in which we start (or end) calculating those vertices.
         */
 
-        var phiStart = GISUtil.degToRadians(90 + bBoxCanvas.swLon);
-        var phiLength = GISUtil.degToRadians(bBoxCanvas.seLon - bBoxCanvas.swLon);
+        const phiStart = GISUtil.degToRadians(90 + bBoxCanvas.swLon);
+        const phiLength = GISUtil.degToRadians(bBoxCanvas.seLon - bBoxCanvas.swLon);
 
 
 
 
-        var thetaStart = GISUtil.degToRadians(bBoxCanvas.swLat);
-        var thetaLength = GISUtil.degToRadians(bBoxCanvas.nwLat - bBoxCanvas.swLat);
+        const thetaStart = GISUtil.degToRadians(bBoxCanvas.swLat);
+        const thetaLength = GISUtil.degToRadians(bBoxCanvas.nwLat - bBoxCanvas.swLat);
 
 
 
-        var geometry = new THREE.SphereGeometry(EARTHRADIUS * ZOOM, RASTER - 1, RASTER - 1, phiStart, phiLength, thetaStart, thetaLength);
+        const geometry = new THREE.SphereGeometry(EARTHRADIUS * ZOOM, RASTER - 1, RASTER - 1, phiStart, phiLength, thetaStart, thetaLength);
 
-        var texture = new THREE.CanvasTexture(canvas);
+        const texture = new THREE.CanvasTexture(canvas);
         texture.minFilter = THREE.LinearFilter;
 
-        var material = new THREE.MeshBasicMaterial({
+        const material = new THREE.MeshBasicMaterial({
             map: texture
         });
 
 
-        var elevations = await this.retrieveElevations(bBoxCanvas, RASTER);
+        const elevations = await this.retrieveElevations(bBoxCanvas, RASTER, zoom);
 
 
 
 
 
 
-        for (var i = 0; i < geometry.vertices.length; i++) {
+        for (let i = 0; i < geometry.vertices.length; i++) {
 
 
             /*console.log(geometry.vertices[i].x);
@@ -244,7 +251,7 @@ class Landscape3dSphere extends ReduxComponent<State> {
 
 
 
-        var plane = new THREE.Mesh(geometry, material);
+        const plane = new THREE.Mesh(geometry, material);
 
         plane.position.z = 0;
         plane.position.y = 0;
@@ -272,7 +279,7 @@ class Landscape3dSphere extends ReduxComponent<State> {
 
 
 
-        var axesHelper = new THREE.AxesHelper(4000);
+        const axesHelper = new THREE.AxesHelper(4000);
         this.scene.add(axesHelper);
 
         console.log("Finished");
@@ -283,31 +290,32 @@ class Landscape3dSphere extends ReduxComponent<State> {
 
     }
 
-    private async retrieveElevations(bBox: BoundingBox, raster: number): Promise<PointXYZ[]> {
-        let dimension = await bBox.getDimensions();
-        let elevationProvider = new Elevation();
+    private async retrieveElevations(bBox: BoundingBox, raster: number, zoom: number): Promise<PointXYZ[]> {
+        const dimension = await bBox.getDimensions(zoom);
+        const elevationProvider = new Elevation();
 
-        var elevations: PointXYZ[] = [];
+
+        const elevations: PointXYZ[] = [];
         const longStep = dimension.longitudeDelta / raster;
         const latiStep = dimension.latitudeDelta / raster;
-        for (var y = 0; y < raster; y++) {
+        for (let y = 0; y < raster; y++) {
 
-            var runningLatitude = bBox.neLat - latiStep * y;
-            for (var x = 0; x < raster; x++) {
-                var runningLongitude = bBox.swLon + longStep * x;
+            const runningLatitude = bBox.neLat - latiStep * y;
+            for (let x = 0; x < raster; x++) {
+                const runningLongitude = bBox.swLon + longStep * x;
 
-                var elevation = await elevationProvider.getElevation({ longitude: runningLongitude, latitude: runningLatitude }, 'pk.eyJ1IjoidWlkMDEwODkiLCJhIjoiY2p6M295MGs2MDVkMDNwb2N5MHljNGFnZiJ9.QLijbhXZfDLxNfIEsBk9Xw');
+                const elevation = await elevationProvider.getElevation({ longitude: runningLongitude, latitude: runningLatitude }, 'pk.eyJ1IjoidWlkMDEwODkiLCJhIjoiY2p6M295MGs2MDVkMDNwb2N5MHljNGFnZiJ9.QLijbhXZfDLxNfIEsBk9Xw', zoom);
 
-                var _r = (EARTHRADIUS + 0) * ZOOM;
+                const _r = (EARTHRADIUS + 0) * ZOOM;
                 /*
                 var _z = _r * Math.cos(GISUtil.degToRadians(runningLongitude));
                 var _x = _r * Math.sin(GISUtil.degToRadians(runningLongitude));
                 var _y = _r * Math.cos(GISUtil.degToRadians(90 - runningLatitude));
                 */
 
-                var _z = _r * Math.sin(GISUtil.degToRadians(90 + runningLatitude)) * Math.cos(GISUtil.degToRadians(runningLongitude));
-                var _x = _r * Math.sin(GISUtil.degToRadians(90 + runningLatitude)) * Math.sin(GISUtil.degToRadians(runningLongitude));
-                var _y = _r * Math.cos(GISUtil.degToRadians(90 + runningLatitude));
+                const _z = _r * Math.sin(GISUtil.degToRadians(90 + runningLatitude)) * Math.cos(GISUtil.degToRadians(runningLongitude));
+                const _x = _r * Math.sin(GISUtil.degToRadians(90 + runningLatitude)) * Math.sin(GISUtil.degToRadians(runningLongitude));
+                const _y = _r * Math.cos(GISUtil.degToRadians(90 + runningLatitude));
 
                 /*
                 x=sin(u)cos(t)
@@ -333,11 +341,11 @@ class Landscape3dSphere extends ReduxComponent<State> {
     }
 
     private addLights() {
-        var ambientLight = new THREE.AmbientLight(0x444444);
+        const ambientLight = new THREE.AmbientLight(0x444444);
         ambientLight.intensity = 0.8;
         this.scene.add(ambientLight);
 
-        var directionalLight = new THREE.DirectionalLight(0xffffff);
+        const directionalLight = new THREE.DirectionalLight(0xffffff);
 
         directionalLight.position.set(900, 400, 0).normalize();
         this.scene.add(directionalLight);
@@ -354,7 +362,7 @@ class Landscape3dSphere extends ReduxComponent<State> {
         return needResize;
     }
 
-    render() {
+    render(): void {
         if (this.resizeRendererToDisplaySize()) {
             const canvas: HTMLCanvasElement = this.renderer.domElement;
             this.camera.aspect = canvas.clientWidth / canvas.clientHeight;

@@ -85,8 +85,8 @@ class CanvasMap {
     }
 
 
-    private async getCoordinate(lonLat: LonLatEle): Promise<Point> {
-        const dimension = await this.bBox.getDimensions();
+    private async getCoordinate(lonLat: LonLatEle, zoom: number): Promise<Point> {
+        const dimension = await this.bBox.getDimensions(zoom);
         const latSpan = dimension.latitudeDelta;
         const lonSpan = dimension.longitudeDelta;
         const northWest = this.bBox.northWest;
@@ -107,14 +107,14 @@ class CanvasMap {
     }
 
 
-    private async addPathToCtx(ctx: CanvasRenderingContext2D, featureCollection: FeatureCollection<LineString>): Promise<void> {
+    private async addPathToCtx(ctx: CanvasRenderingContext2D, featureCollection: FeatureCollection<LineString>, zoom: number): Promise<void> {
         let firstPoint = true;
         for (const feature of featureCollection.features) {
 
             if ((typeof feature.geometry !== 'undefined') && (feature.geometry.type === "LineString")) {
                 if (typeof feature.geometry.coordinates !== 'undefined') {
                     for (const coordinate of feature.geometry.coordinates) {
-                        const point = await this.getCoordinate({ longitude: coordinate[0], latitude: coordinate[1] });
+                        const point = await this.getCoordinate({ longitude: coordinate[0], latitude: coordinate[1] }, zoom);
 
 
 
@@ -129,7 +129,7 @@ class CanvasMap {
         }
     }
 
-    async addFeature(featureCollection: FeatureCollection<LineString>): Promise<void> {
+    async addFeature(featureCollection: FeatureCollection<LineString>, zoom: number): Promise<void> {
         let release: UnlockFct;
         try {
             release = await this.mutex.lock();
@@ -141,7 +141,7 @@ class CanvasMap {
             ctx.lineWidth = 5;
             ctx.beginPath();
 
-            const promise = this.addPathToCtx(ctx, featureCollection);
+            const promise = this.addPathToCtx(ctx, featureCollection, zoom);
             promise.then(() => {
 
                 ctx.stroke();

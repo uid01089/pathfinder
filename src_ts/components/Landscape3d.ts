@@ -6,7 +6,9 @@ import { AbstractReduxStore } from '../js_web_comp_lib/AbstractReduxStore';
 import { AbstractReducer } from '../js_web_comp_lib/AbstractReducer';
 
 import * as THREE from 'three';
-import * as OrbitControls from 'three-orbitcontrols';
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { FlyControls } from "three/examples/jsm/controls/FlyControls";
+import { FirstPersonControls } from "three/examples/jsm/controls/FirstPersonControls";
 import { BoundingBox } from '../GIS/BoundingBox';
 import { WebGLRenderer, WebGLRendererParameters } from 'three';
 import { Elevation } from '../GIS/Elevation';
@@ -72,7 +74,9 @@ class Landscape3d extends ReduxComponent<State> {
         this.parentElement.addEventListener('midiWindowChanged', (e: CustomEvent) => {
             // Update in case the MIDI-Window was changed
             const details: MidiWindowEventResult = e.detail;
-            //FIXME
+
+
+
             //this.update();
         });
     }
@@ -249,14 +253,16 @@ class Landscape3d extends ReduxComponent<State> {
         <style>
           #Canvas { 
               display: block; 
-              height: 500px; 
-              width: 800px;
+             
+              height: 100%; 
+              width: 100%;
+            
               }
 
             #Loader {
                 position: absolute;
-                top: 250px;
-                left: 400px;
+                top: 50%;
+                left: 50%;
                 display:block
             }
         </style>
@@ -346,7 +352,7 @@ class Landscape3d extends ReduxComponent<State> {
         await canvasMap.addTiles(this.layerStack);
 
         // add the Track at last level
-        await canvasMap.addFeature(featureCollection as FeatureCollection<LineString>);
+        await canvasMap.addFeature(featureCollection as FeatureCollection<LineString>, zoom);
         const canvas = await canvasMap.getCanvas();
         const bBoxCanvas = canvasMap.getBoundingBox();
 
@@ -363,7 +369,7 @@ class Landscape3d extends ReduxComponent<State> {
         const SIZE = 2000;
 
 
-        const dimension = await bBoxCanvas.getDimensions();
+        const dimension = await bBoxCanvas.getDimensions(zoom);
         const zoomLevel = SIZE / dimension.y;
 
         //var geometry = new THREE.PlaneGeometry(SIZE * window.innerWidth / window.innerHeight, SIZE, RASTER - 1, RASTER - 1);
@@ -412,7 +418,7 @@ class Landscape3d extends ReduxComponent<State> {
     }
 
     private async retrieveElevations(bBox: BoundingBox, raster: number, zoom: number): Promise<number[]> {
-        const dimension = await bBox.getDimensions();
+        const dimension = await bBox.getDimensions(zoom);
         const elevationProvider = new Elevation();
 
         const elevations: number[] = [];
@@ -424,7 +430,7 @@ class Landscape3d extends ReduxComponent<State> {
             for (let x = 0; x < raster; x++) {
                 const runningLongitude = bBox.swLon + longStep * x;
 
-                const elevation = await elevationProvider.getElevation({ longitude: runningLongitude, latitude: runningLatitude }, 'pk.eyJ1IjoidWlkMDEwODkiLCJhIjoiY2p6M295MGs2MDVkMDNwb2N5MHljNGFnZiJ9.QLijbhXZfDLxNfIEsBk9Xw');
+                const elevation = await elevationProvider.getElevation({ longitude: runningLongitude, latitude: runningLatitude }, 'pk.eyJ1IjoidWlkMDEwODkiLCJhIjoiY2p6M295MGs2MDVkMDNwb2N5MHljNGFnZiJ9.QLijbhXZfDLxNfIEsBk9Xw', zoom);
                 elevations.push(elevation);
 
             }

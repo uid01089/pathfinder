@@ -17,7 +17,7 @@ class Elevation implements ElevationProvider {
 
 
 
-    public async getElevation(coordinate: LonLatEle, accessToken: string): Promise<number> {
+    public async getElevation(coordinate: LonLatEle, accessToken: string, zoom: number): Promise<number> {
 
         //var worker = new Worker("./ElevationWorker.ts", { type: "module" });
 
@@ -27,7 +27,7 @@ class Elevation implements ElevationProvider {
 
             for (const elevationProvider of this.elevationProviders) {
                 try {
-                    elevation = await elevationProvider.getElevation(coordinate, accessToken);
+                    elevation = await elevationProvider.getElevation(coordinate, accessToken, zoom);
 
                     // We were successful, break
                     break;

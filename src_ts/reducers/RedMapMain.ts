@@ -6,6 +6,8 @@ import { GISUtil } from '../GIS/GISUtil';
 import { GpxFile, LonLatEle, Track } from '../GIS/GpxFile';
 import { Elevation } from '../GIS/Elevation';
 import { IMarker } from '../GIS/Marker';
+import { BoxZoomHandler } from 'mapbox-gl';
+import { Util } from '../lib/Util';
 
 
 
@@ -27,32 +29,39 @@ interface ActionSetCenter extends Action {
     center: LonLatEle;
 }
 interface ActionOpenGpxFile extends Action {
-    files: FileList
+    files: FileList,
+    zoom: number,
 }
 interface ActionSaveGpxFile extends Action {
-
+    fileName: string,
+    markers: IMarker[]
 }
 interface ActionSetDirections extends Action {
     directions: DirectionsImpl;
     doEvelationCalculation: boolean;
+    zoom: number;
 }
 interface ActionAddMarkers extends Action {
     marker: IMarker;
+    zoom: number;
 }
 interface ActionChangeMarkers extends Action {
     marker: IMarker;
     index: number;
+    zoom: number;
 }
 interface ActionDeleteMarkers extends Action {
     marker: IMarker;
     index: number;
+    zoom: number;
 }
 interface ActionDeleteAllMarkers extends Action {
-
+    zoom: number
 }
 
 interface ActionToggleAutoRoute extends Action {
     state: boolean;
+    zoom: number;
 }
 
 interface ActionCompleteDirection extends Action {
@@ -61,13 +70,6 @@ interface ActionCompleteDirection extends Action {
 
 class RedMapMain extends AbstractReducer<State> {
     private mapBoxUtil: GISUtil;
-
-
-
-
-
-
-
 
     constructor() {
         super(reduxStoreInstance);
@@ -83,22 +85,20 @@ class RedMapMain extends AbstractReducer<State> {
 
             case MAP_MAIN_OPEN_GPX_FILE:
                 {
-                    var actionReadIn: ActionOpenGpxFile = action as ActionOpenGpxFile;
-
-                    var files = actionReadIn.files;
+                    const actionReadIn: ActionOpenGpxFile = action as ActionOpenGpxFile;
+                    const files = actionReadIn.files;
 
                     Array.from(files).forEach((file) => {
 
 
-                        var gpxFilePromise = GpxFile.load(file);
+                        const gpxFilePromise = GpxFile.load(file);
 
                         gpxFilePromise.then((gpxFile) => {
-                            var tracks = gpxFile.getTrks();
-
+                            const tracks = gpxFile.getTrks();
 
 
                             // Add a direction with values from track 0
-                            this.setDirectionsByTrack(tracks[0]);
+                            this.setDirectionsByTrack(tracks[0], actionReadIn.zoom);
 
                             // Set Map center to the first marker
                             this.setCenter(tracks[0].lonLatEles[0]);
@@ -110,9 +110,9 @@ class RedMapMain extends AbstractReducer<State> {
                     })
 
 
-                    var newState = Object.assign({}, state, {
-                        action: actionReadIn.type,
-                    });
+                    const newState = Util.cloneObject<State>(state);
+                    newState.action = actionReadIn.type;
+
 
                     // Delete all markers and tracks
                     newState.markers = [];
@@ -122,137 +122,141 @@ class RedMapMain extends AbstractReducer<State> {
 
             case MAP_MAIN_SAVE_GPX_FILE:
                 {
-                    var actionSaveGpxFile: ActionSaveGpxFile = action as ActionSaveGpxFile;
-                    var newState0 = Object.assign({}, state, {
-                        action: actionSaveGpxFile.type,
-                    });
+                    const actionSaveGpxFile: ActionSaveGpxFile = action as ActionSaveGpxFile;
+                    const fileName = actionSaveGpxFile.fileName;
+                    const markers = actionSaveGpxFile.markers;
 
-                    return newState0;
+                    GpxFile.save(fileName, markers);
+
+                    const newState = Util.cloneObject<State>(state);
+                    newState.action = actionSaveGpxFile.type;
+
+
+
+                    return newState;
                 }
 
             case MAP_MAIN_TOGGLE_AUTO_ROUTE:
                 {
-                    var actionToogleAutoRoute: ActionToggleAutoRoute = action as ActionToggleAutoRoute;
-                    var newStateToogleAutoRoute = Object.assign({}, state, {
-                        action: actionToogleAutoRoute.type,
-                    });
+                    const actionToogleAutoRoute: ActionToggleAutoRoute = action as ActionToggleAutoRoute;
 
-                    newStateToogleAutoRoute.programSetting.autoRouting = actionToogleAutoRoute.state;
+
+                    const newState = Util.cloneObject<State>(state);
+                    newState.action = actionToogleAutoRoute.type;
+
+                    newState.programSetting.autoRouting = actionToogleAutoRoute.state;
 
                     // Trigger route calculation
-                    this.setDirectionsByMarkers(newStateToogleAutoRoute.markers, newStateToogleAutoRoute.programSetting.autoRouting, newStateToogleAutoRoute.programSetting.accessToken);
+                    this.setDirectionsByMarkers(newState.markers, newState.programSetting.autoRouting, newState.programSetting.accessToken, actionToogleAutoRoute.zoom);
 
 
-                    return newStateToogleAutoRoute;
+                    return newState;
                 }
 
             case MAP_MAIN_SET_DIRECTIONS:
                 {
-                    var actionSetDirections: ActionSetDirections = action as ActionSetDirections;
-                    var newState1 = Object.assign({}, state, {
-                        action: actionSetDirections.type,
-                        directions: actionSetDirections.directions,
-                    });
+                    const actionSetDirections: ActionSetDirections = action as ActionSetDirections;
 
-                    if (typeof newState1.directions !== 'undefined' && newState1.directions != null) {
-                        this.completeDirections(newState1.directions, newState1.programSetting.accessToken, actionSetDirections.doEvelationCalculation);
+                    const newState = Util.cloneObject<State>(state);
+                    newState.action = actionSetDirections.type;
+                    newState.directions = actionSetDirections.directions;
+
+                    if (typeof newState.directions !== 'undefined' && newState.directions != null) {
+                        this.completeDirections(newState.directions, newState.programSetting.accessToken, actionSetDirections.doEvelationCalculation, actionSetDirections.zoom);
                     }
 
-                    return newState1;
+                    return newState;
                 }
 
             case MAP_MAIN_COMPLETE_DIRECTIONS:
                 {
-                    var actionCompleteDirections: ActionCompleteDirection = action as ActionCompleteDirection;
-                    var newStateCompleteDirections = Object.assign({}, state, {
-                        action: actionCompleteDirections.type,
-                        directions: actionCompleteDirections.directions,
-                    });
+                    const actionCompleteDirections: ActionCompleteDirection = action as ActionCompleteDirection;
 
+                    const newState = Util.cloneObject<State>(state);
+                    newState.action = actionCompleteDirections.type;
+                    newState.directions = actionCompleteDirections.directions;
 
-
-                    return newStateCompleteDirections;
+                    return newState;
                 }
 
             case MAP_MAIN_ADD_MARKER:
                 {
-                    var actionAddMarker: ActionAddMarkers = action as ActionAddMarkers;
-                    var marker = actionAddMarker.marker;
+                    const actionAddMarker: ActionAddMarkers = action as ActionAddMarkers;
+                    const marker = actionAddMarker.marker;
 
-                    var newState2 = Object.assign({}, state, {
-                        action: actionAddMarker.type,
-                    });
+                    const newState = Util.cloneObject<State>(state);
+                    newState.action = actionAddMarker.type;
 
-                    newState2.markers.push(marker);
+                    newState.markers.push(marker);
 
                     // Trigger route calculation
-                    this.setDirectionsByMarkers(newState2.markers, newState2.programSetting.autoRouting, newState2.programSetting.accessToken);
+                    this.setDirectionsByMarkers(newState.markers, newState.programSetting.autoRouting, newState.programSetting.accessToken, actionAddMarker.zoom);
 
-                    return newState2;
+                    return newState;
                 }
 
             case MAP_MAIN_DELETE_ALL_MARKERS:
                 {
-                    var actionDeleteAllMarker: ActionDeleteAllMarkers = action as ActionDeleteAllMarkers;
+                    const actionDeleteAllMarker: ActionDeleteAllMarkers = action as ActionDeleteAllMarkers;
 
-                    var newStateDeleteAllMarker = Object.assign({}, state, {
-                        action: actionDeleteAllMarker.type,
-                    });
 
-                    newStateDeleteAllMarker.markers = [];
+                    const newState = Util.cloneObject<State>(state);
+                    newState.action = actionDeleteAllMarker.type;
+
+                    newState.markers = [];
 
                     // Trigger route calculation
-                    this.setDirectionsByMarkers(newStateDeleteAllMarker.markers, newStateDeleteAllMarker.programSetting.autoRouting, newStateDeleteAllMarker.programSetting.accessToken);
+                    this.setDirectionsByMarkers(newState.markers, newState.programSetting.autoRouting, newState.programSetting.accessToken, actionDeleteAllMarker.zoom);
 
-                    return newStateDeleteAllMarker;
+                    return newState;
                 }
 
             case MAP_MAIN_CHANGE_MARKER: {
-                var actionChangeMarker: ActionChangeMarkers = action as ActionChangeMarkers;
-                var marker = actionChangeMarker.marker;
-                var index = actionChangeMarker.index;
+                const actionChangeMarker: ActionChangeMarkers = action as ActionChangeMarkers;
+                const marker = actionChangeMarker.marker;
+                const index = actionChangeMarker.index;
 
-                var newState4 = Object.assign({}, state, {
-                    action: actionChangeMarker.type,
-                });
+                const newState = Util.cloneObject<State>(state);
+                newState.action = actionChangeMarker.type;
 
-                newState4.markers[index] = marker;
+                newState.markers[index] = marker;
 
                 // Trigger route calculation
-                this.setDirectionsByMarkers(newState4.markers, newState4.programSetting.autoRouting, newState4.programSetting.accessToken);
+                this.setDirectionsByMarkers(newState.markers, newState.programSetting.autoRouting, newState.programSetting.accessToken, actionChangeMarker.zoom);
 
-                return newState4;
+                return newState;
             }
 
             case MAP_MAIN_DELETE_MARKER:
                 {
-                    var actionDeleteMarker: ActionDeleteMarkers = action as ActionDeleteMarkers;
-                    var marker = actionDeleteMarker.marker;
-                    var index = actionDeleteMarker.index;
+                    const actionDeleteMarker: ActionDeleteMarkers = action as ActionDeleteMarkers;
+                    const marker = actionDeleteMarker.marker;
+                    const index = actionDeleteMarker.index;
 
-                    var newState3 = Object.assign({}, state, {
-                        action: actionDeleteMarker.type,
-                    });
 
-                    newState3.markers.splice(index, 1);
+                    const newState = Util.cloneObject<State>(state);
+                    newState.action = actionDeleteMarker.type;
+
+                    newState.markers.splice(index, 1);
 
                     // Trigger route calculation
-                    this.setDirectionsByMarkers(newState3.markers, newState3.programSetting.autoRouting, newState3.programSetting.accessToken);
+                    this.setDirectionsByMarkers(newState.markers, newState.programSetting.autoRouting, newState.programSetting.accessToken, actionDeleteMarker.zoom);
 
-                    return newState3;
+                    return newState;
                 }
 
             case MAP_MAIN_SET_CENTER:
                 {
-                    var actionSetCenter: ActionSetCenter = action as ActionSetCenter;
-
-                    var newStateSetCenter = Object.assign({}, state, {
-                        action: actionSetCenter.type,
-                        center: actionSetCenter.center
-                    });
+                    const actionSetCenter: ActionSetCenter = action as ActionSetCenter;
 
 
-                    return newStateSetCenter;
+
+                    const newState = Util.cloneObject<State>(state);
+                    newState.action = actionSetCenter.type;
+                    newState.center = actionSetCenter.center;
+
+
+                    return newState;
                 }
             default: return state;
         }
@@ -260,89 +264,69 @@ class RedMapMain extends AbstractReducer<State> {
     }
 
 
-    openGpxFile(files: FileList) {
+    openGpxFile(files: FileList, zoom: number): void {
 
 
         const action: ActionOpenGpxFile = {
             type: MAP_MAIN_OPEN_GPX_FILE,
-            files: files
+            files: files,
+            zoom: zoom,
         }
         this.store.dispatch(action);
 
 
-        const options = {
-            //title: 'Open a file or folder',
-            //defaultPath: '/path/to/something/',
-            //buttonLabel: 'Do it',
-            filters: [
-                { name: 'gpx', extensions: ['gpx'] }
-            ],
-            properties: ['openFile', 'promptToCreate'],
-            //message: 'This message will only be shown on macOS'
-        };
 
 
-        /*
-        dialog.showOpenDialog(null, options, (fileNames) => {
-
-            if (typeof fileNames !== 'undefined') {
-
-                if (fileNames.length > 0) {
-
-                    const action: ActionOpenGpxFile = {
-                        type: MAP_MAIN_OPEN_GPX_FILE,
-                        path: fileNames[0]
-                    }
-                    this.store.dispatch(action);
-                }
-            }
-        }
-        );
-        */
 
     }
-    saveGpxFile() {
+    saveGpxFile(file: string, markers: IMarker[]): void {
         const action: ActionSaveGpxFile = {
-            type: MAP_MAIN_SAVE_GPX_FILE
+            type: MAP_MAIN_SAVE_GPX_FILE,
+            fileName: file,
+            markers: markers
         }
         this.store.dispatch(action);
     }
 
 
-    addMarker(markerToBeAdded: IMarker) {
+    addMarker(markerToBeAdded: IMarker, zoom: number): void {
         const action: ActionAddMarkers = {
             type: MAP_MAIN_ADD_MARKER,
-            marker: markerToBeAdded
+            marker: markerToBeAdded,
+            zoom: zoom
         }
         this.store.dispatch(action);
     }
 
-    changeMarker(index: number, marker: IMarker) {
+    changeMarker(index: number, marker: IMarker, zoom: number): void {
         const action: ActionChangeMarkers = {
             type: MAP_MAIN_CHANGE_MARKER,
             marker: marker,
-            index: index
+            index: index,
+            zoom: zoom
         }
         this.store.dispatch(action);
     }
 
-    deleteMarker(index: number, markerToBeDeleted: IMarker) {
+    deleteMarker(index: number, markerToBeDeleted: IMarker, zoom: number): void {
         const action: ActionDeleteMarkers = {
             type: MAP_MAIN_DELETE_MARKER,
             marker: markerToBeDeleted,
-            index: index
+            index: index,
+            zoom: zoom
         }
         this.store.dispatch(action);
     }
 
-    setDirectionsByTrack(track: Track) {
-        let actionFct = (dispatch) => {
-            var directionsPromise = DirectionsImpl.getDirectionsFromTrack(track);
+    setDirectionsByTrack(track: Track, zoom: number): void {
+        const actionFct = (dispatch) => {
+            const directionsPromise = DirectionsImpl.getDirectionsFromTrack(track);
             directionsPromise.then(
                 (directions: DirectionsImpl) => dispatch({
                     type: MAP_MAIN_SET_DIRECTIONS,
                     directions: directions,
-                    doEvelationCalculation: false
+                    doEvelationCalculation: false,
+                    zoom: zoom,
 
 
                 } as ActionSetDirections),
@@ -356,9 +340,9 @@ class RedMapMain extends AbstractReducer<State> {
 
     }
 
-    completeDirections(directions: DirectionsImpl, accessToken: string, doEvelationCalculation: boolean = true) {
-        let actionFct = (dispatch) => {
-            var directionsCompletedPromise = directions.complete(accessToken, doEvelationCalculation);
+    completeDirections(directions: DirectionsImpl, accessToken: string, doEvelationCalculation = true, zoom: number): void {
+        const actionFct = (dispatch) => {
+            const directionsCompletedPromise = directions.complete(accessToken, doEvelationCalculation, zoom);
 
             directionsCompletedPromise.then((directionsCompleted) => {
                 const action: ActionCompleteDirection = {
@@ -373,12 +357,12 @@ class RedMapMain extends AbstractReducer<State> {
         this.store.dispatch(actionFct);
     }
 
-    setDirectionsByMarkers(markers: IMarker[], autoRouting: boolean, accessToken: string) {
+    setDirectionsByMarkers(markers: IMarker[], autoRouting: boolean, accessToken: string, zoom: number): void {
 
-        let actionFct = (dispatch) => {
+        const actionFct = (dispatch) => {
             if (markers.length > 1) {
 
-                var directionsPromise: Promise<DirectionsImpl>;
+                let directionsPromise: Promise<DirectionsImpl>;
                 if (autoRouting) {
                     directionsPromise = DirectionsImpl.getDirections(markers, accessToken);
                 } else {
@@ -389,7 +373,8 @@ class RedMapMain extends AbstractReducer<State> {
                     (directions: DirectionsImpl) => dispatch({
                         type: MAP_MAIN_SET_DIRECTIONS,
                         directions: directions,
-                        doEvelationCalculation: true
+                        doEvelationCalculation: true,
+                        zoom: zoom
 
                     } as ActionSetDirections),
 
@@ -402,7 +387,8 @@ class RedMapMain extends AbstractReducer<State> {
                 const action: ActionSetDirections = {
                     type: MAP_MAIN_SET_DIRECTIONS,
                     directions: null,
-                    doEvelationCalculation: true
+                    doEvelationCalculation: true,
+                    zoom: zoom
                 };
                 // Force to be asynchron
                 setTimeout(() => { dispatch(action); }, 1); // Works flawlessly
@@ -412,10 +398,11 @@ class RedMapMain extends AbstractReducer<State> {
         this.store.dispatch(actionFct);
     }
 
-    delAllMarkers() {
-        let actionFct = (dispatch) => {
+    delAllMarkers(zoom: number): void {
+        const actionFct = (dispatch) => {
             const action: ActionDeleteAllMarkers = {
-                type: MAP_MAIN_DELETE_ALL_MARKERS
+                type: MAP_MAIN_DELETE_ALL_MARKERS,
+                zoom: zoom
             };
 
             // Force to be asynchron
@@ -424,8 +411,8 @@ class RedMapMain extends AbstractReducer<State> {
         this.store.dispatch(actionFct);
     }
 
-    setCenter(center: LonLatEle) {
-        let actionFct = (dispatch) => {
+    setCenter(center: LonLatEle): void {
+        const actionFct = (dispatch) => {
             const action: ActionSetCenter = {
                 type: MAP_MAIN_SET_CENTER,
                 center: center
@@ -437,10 +424,11 @@ class RedMapMain extends AbstractReducer<State> {
         this.store.dispatch(actionFct);
     }
 
-    toggleAutoRoute(state: boolean) {
+    toggleAutoRoute(state: boolean, zoom: number): void {
         const action: ActionToggleAutoRoute = {
             type: MAP_MAIN_TOGGLE_AUTO_ROUTE,
-            state: state
+            state: state,
+            zoom: zoom,
         };
         this.store.dispatch(action);
     }

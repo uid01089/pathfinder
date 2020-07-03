@@ -50,10 +50,10 @@ class BoundingBox {
 
     isPointIncluded(point: LonLatEle): boolean {
 
-        var lonPoint = point.longitude;
-        var latPoint = point.latitude;
+        const lonPoint = point.longitude;
+        const latPoint = point.latitude;
 
-        var inPoint = (lonPoint >= this.swLon) && (lonPoint <= this.neLon) && (latPoint >= this.swLat) && (latPoint <= this.neLat);
+        const inPoint = (lonPoint >= this.swLon) && (lonPoint <= this.neLon) && (latPoint >= this.swLat) && (latPoint <= this.neLat);
         return inPoint;
     }
 
@@ -61,21 +61,21 @@ class BoundingBox {
         return this.isPointIncluded(bBox.southWest) && this.isPointIncluded(bBox.northEast);
     }
 
-    async getDimensions(): Promise<Dimensions> {
+    async getDimensions(zoom: number): Promise<Dimensions> {
 
-        let elevations = new Elevation();
+        const elevations = new Elevation();
 
         if (null == this.dimension) {
             const gisUtil = new GISUtil();
 
 
-            var nwElevation = await elevations.getElevation({ longitude: this.nwLon, latitude: this.nwLat }, 'pk.eyJ1IjoidWlkMDEwODkiLCJhIjoiY2p6M295MGs2MDVkMDNwb2N5MHljNGFnZiJ9.QLijbhXZfDLxNfIEsBk9Xw');
+            const nwElevation = await elevations.getElevation({ longitude: this.nwLon, latitude: this.nwLat }, 'pk.eyJ1IjoidWlkMDEwODkiLCJhIjoiY2p6M295MGs2MDVkMDNwb2N5MHljNGFnZiJ9.QLijbhXZfDLxNfIEsBk9Xw', zoom);
 
-            var lat = Math.abs(this.neLat - this.seLat);
-            var lon = Math.abs(this.neLon - this.nwLon);
+            const lat = Math.abs(this.neLat - this.seLat);
+            const lon = Math.abs(this.neLon - this.nwLon);
             // distance(lon1: number, lat1: number, el1: number, lon2: number, lat2: number, el2: number)
-            var x = gisUtil.distance(this.nwLon, this.nwLat, nwElevation, this.neLon, this.neLat, nwElevation);
-            var y = gisUtil.distance(this.nwLon, this.nwLat, nwElevation, this.swLon, this.swLat, nwElevation);
+            const x = gisUtil.distance(this.nwLon, this.nwLat, nwElevation, this.neLon, this.neLat, nwElevation);
+            const y = gisUtil.distance(this.nwLon, this.nwLat, nwElevation, this.swLon, this.swLat, nwElevation);
 
             this.dimension = {
                 latitudeDelta: lat,
