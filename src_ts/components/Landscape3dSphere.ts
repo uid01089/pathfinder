@@ -6,7 +6,7 @@ import { AbstractReduxStore } from '../js_web_comp_lib/AbstractReduxStore';
 import { AbstractReducer } from '../js_web_comp_lib/AbstractReducer';
 
 import * as THREE from 'three';
-import * as OrbitControls from 'three-orbitcontrols';
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { BoundingBox } from '../GIS/BoundingBox';
 import { WebGLRenderer, WebGLRendererParameters } from 'three';
 import { Elevation } from '../GIS/Elevation';

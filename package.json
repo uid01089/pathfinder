@@ -9,26 +9,17 @@
     "build": "tsc --build tsconfig.json",
     "webpack": "webpack --mode development"
   },
-  "author": "",
+  "author": "Konrad Schmid",
   "license": "ISC",
+  "repository": {
+    "url": "https://github.com/uid01089/pathfinder"
+  },
   "dependencies": {
-    "@types/jszip": "^3.1.6",
-    "@types/leaflet": "^1.5.1",
-    "chartist": "^0.11.3",
-    "chartist-plugin-legend": "^0.6.2",
-    "gpx-parser-builder": "^1.0.1",
-    "jszip": "^3.2.2",
+    "js_web_comp_lib": "file:src_ts/js_web_comp_lib",
+    "js_lib": "file:src_ts/lib",
     "leaflet": "^1.5.1",
     "leaflet-control-geocoder": "^1.9.0",
-    "lodash": "^4.17.15",
-    "moment": "^2.24.0",
-    "redux": "^4.0.5",
-    "redux-thunk": "^2.3.0",
-    "simple-git": "^2.5.0",
-    "stream": "0.0.2",
     "three": "^0.117.1",
-    "three-orbitcontrols": "^2.108.1",
-    "timers": "^0.1.1",
     "xml2js": "^0.4.19"
   },
   "devDependencies": {
@@ -39,6 +30,8 @@
     "@types/mapbox-gl": "^1.6.1",
     "@typescript-eslint/eslint-plugin": "^3.2.0",
     "@typescript-eslint/parser": "^3.2.0",
+    "@types/jszip": "^3.1.6",
+    "@types/leaflet": "^1.5.1",
     "babel-loader": "^8.1.0",
     "clean-webpack-plugin": "^3.0.0",
     "copy-webpack-plugin": "^6.0.1",
