@@ -75,7 +75,7 @@ class ImpressumElement extends ReduxComponent<State> {
         </p>
 
         <p>
-        <h3>Verwendete Inhalte:</h3>
+        <h3>Used content:</h3>
 
 
         <a href="http://opentopomap.org">opentopomap.org</a>
@@ -102,7 +102,12 @@ class ImpressumElement extends ReduxComponent<State> {
         Sinn und Zweck dieser Seite ist, die grundlegenden Techniken von Javascript, Typescript, Html und Css zu erlernen.
         </p>
 
-
+        
+        <p>
+        <h3>Source:</h3>
+        Der Source-Code ist auf GitHub veröffentlicht und kann eingesehen werden: 
+        <a href="https://github.com/uid01089/pathfinder">Pathfinder</a>
+        </p>
         `;
     }
 
