@@ -9,19 +9,19 @@ The focus was not 'only' use and learn an existing framework, but more to learn 
 I have the personal need to show and create GPX tracks. Maps and tracks seems to be a good opportunity to lean the Web-techniques.
 
 ### Showing Maps
-I tried to use all existing tile providers I found on the free web. Mainly related to https://openstreetmap.com[openstreetmap], as well as from commercial providers (like https://google.com[google.com] or https://mapbox.com[mapbox.com]). As rendering engine the famous https://leafletjs.com/[leaflet] is used.
+I tried to use all existing tile providers I found on the free web. Mainly related to https://openstreetmap.com, as well as from commercial providers (like https://google.com or https://mapbox.com). As rendering engine the famous https://leafletjs.com/ is used.
 
 ### Showing trails
 Existing, official available trails can be displayed on the maps. Following resources can be added to the map:
 
-- https://geodatenonline.bayern.de/geodatenonline/seiten/wms_fzw[geodatenonline.bayern.de]
-- https://hiking.waymarkedtrails.org/help/legal[waymarkedtrails.org]
+- https://geodatenonline.bayern.de/geodatenonline/seiten/wms_fzw
+- https://hiking.waymarkedtrails.org/help/legal
 
 ### Showing weather
 The raining radar as well the the clouds can be displayed of the map. These information are provided by 
 
-- https://maps.dwd.de/geoserver/web/[DWD-SAT_WELT_KOMPOSIT]
-- https://maps.dwd.de/geoserver/web[DWD-FX-Produkt]
+- https://maps.dwd.de/geoserver/web/
+- https://maps.dwd.de/geoserver/web
 
 ### Showing parking possibilities, Alpin Huts and Guest Houses
 Parking possibilities, Alpin Huts and Guest Houses are retrieved from https://wiki.openstreetmap.org/wiki/Overpass_API[openstreetmap via Overpass-API].
