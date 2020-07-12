@@ -20,7 +20,7 @@ class ElevationMapBoxTile implements ElevationProvider {
 
         // Retrieve picture with elevation coded as RGB
         const mapBoxUtil = new GISUtil();
-        const tailInfo = mapBoxUtil.getTailInfo(coordinate.longitude, coordinate.latitude, zoom);
+        const tailInfo = mapBoxUtil.getTileInfo(coordinate.longitude, coordinate.latitude, zoom);
         const url = 'https://api.mapbox.com/v4/mapbox.terrain-rgb/' + zoom + '/' + tailInfo.xTile + '/' + tailInfo.yTile + '.pngraw?access_token=' + accessToken;
 
         const image = await PictureUtil.load(url);

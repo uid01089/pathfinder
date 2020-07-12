@@ -71,7 +71,6 @@ class ImpressumElement extends ReduxComponent<State> {
         </p>
 
         <p>
-        Telefon: 1223<br />
         E-Mail: <a href="mailto:learning.k@skschmid.de">learning.k@skschmid.de</a>
         </p>
 

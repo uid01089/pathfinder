@@ -27,10 +27,10 @@ class CanvasMap {
 
         this.zoom = zoom;
 
-        this.tailNw = this.gisUtil.getTailInfo(bBox.nwLon, bBox.nwLat, this.zoom);
-        this.tailNe = this.gisUtil.getTailInfo(bBox.neLon, bBox.neLat, this.zoom);
-        this.tailSw = this.gisUtil.getTailInfo(bBox.swLon, bBox.swLat, this.zoom);
-        this.tailSe = this.gisUtil.getTailInfo(bBox.seLon, bBox.seLat, this.zoom);
+        this.tailNw = this.gisUtil.getTileInfo(bBox.nwLon, bBox.nwLat, this.zoom);
+        this.tailNe = this.gisUtil.getTileInfo(bBox.neLon, bBox.neLat, this.zoom);
+        this.tailSw = this.gisUtil.getTileInfo(bBox.swLon, bBox.swLat, this.zoom);
+        this.tailSe = this.gisUtil.getTileInfo(bBox.seLon, bBox.seLat, this.zoom);
 
         this.bBox = new BoundingBox(this.tailSw.leftUp.longitude, this.tailSw.leftUp.latitude - this.tailSw.latArea, //
             this.tailNe.leftUp.longitude + this.tailNe.lonArea, this.tailNe.leftUp.latitude);
