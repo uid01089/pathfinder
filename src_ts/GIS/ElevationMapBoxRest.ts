@@ -9,11 +9,11 @@ class ElevationMapBoxRest {
 
     public static async getElevation(coordinate: LonLatEle, accessToken: string): Promise<number> {
 
-        let urlElevationNotExactly = 'https://api.mapbox.com/v4/mapbox.mapbox-terrain-v2/tilequery/' + coordinate[0] + "," + coordinate[1] + '.json?&access_token=' + accessToken;
-        let response = await fetch(urlElevationNotExactly);
-        var elevationFeatures = await response.json() as FeatureCollection;
-        var featureCollectionImpl = new FeatureCollectionImpl(elevationFeatures);
-        var elevationNotExaclty = featureCollectionImpl.getElevation();
+        const urlElevationNotExactly = 'https://api.mapbox.com/v4/mapbox.mapbox-terrain-v2/tilequery/' + coordinate[0] + "," + coordinate[1] + '.json?&access_token=' + accessToken;
+        const response = await fetch(urlElevationNotExactly);
+        const elevationFeatures = await response.json() as FeatureCollection;
+        const featureCollectionImpl = new FeatureCollectionImpl(elevationFeatures);
+        const elevationNotExaclty = featureCollectionImpl.getElevation();
 
         return elevationNotExaclty;
 

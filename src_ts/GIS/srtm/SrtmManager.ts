@@ -16,12 +16,12 @@ class SrtmManager implements ElevationProvider {
 
     public async getElevation(coordinate: LonLatEle, accessToken: string): Promise<number> {
 
-        var elevation = undefined;
+        let elevation = undefined;
 
         // Use of method caused by async
-        for (var srtmDownloader of this.srtmDownloader) {
+        for (const srtmDownloader of this.srtmDownloader) {
             try {
-                var hgtFile = await srtmDownloader.getHgtFile(coordinate);
+                const hgtFile = await srtmDownloader.getHgtFile(coordinate);
                 elevation = await hgtFile.getElevation(coordinate);
 
                 // We were successful, break

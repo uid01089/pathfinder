@@ -14,26 +14,24 @@ class SrtmDownloaderNase extends SrtmDownloaderBase implements SrtmDownloader {
 
 
     async getHgtFile(point: LonLatEle): Promise<HgtFile> {
-        let tileName = SrtmUtil.getTileName(point);
-        var hgtFile = this.cache.get(tileName);
+        const tileName = SrtmUtil.getTileName(point);
+        let hgtFile = this.cache.get(tileName);
         if (undefined == hgtFile) {
-            try {
-                var zipFile = await this.download(tileName);
-                var blob = await zipFile.blob();
-                if (blob.size != 0) {
 
-                    var unzipFile = await JSZip.loadAsync(blob);
-                    var hgtContent = await unzipFile.file(tileName + '.hgt').async("arraybuffer");
+            const zipFile = await this.download(tileName);
+            const blob = await zipFile.blob();
+            if (blob.size != 0) {
 
-                    hgtFile = new HgtFile(hgtContent, { latitude: Math.floor(point.latitude), longitude: Math.floor(point.longitude) } as LonLatEle);
+                const unzipFile = await JSZip.loadAsync(blob);
+                const hgtContent = await unzipFile.file(tileName + '.hgt').async("arraybuffer");
 
-                    this.cache.set(tileName, hgtFile);
-                } else {
-                    throw new Error("Blob is empty");
-                }
-            } catch (error) {
-                throw error;
+                hgtFile = new HgtFile(hgtContent, { latitude: Math.floor(point.latitude), longitude: Math.floor(point.longitude) } as LonLatEle);
+
+                this.cache.set(tileName, hgtFile);
+            } else {
+                throw new Error("Blob is empty");
             }
+
         }
 
 
@@ -43,10 +41,10 @@ class SrtmDownloaderNase extends SrtmDownloaderBase implements SrtmDownloader {
 
     private async download(tileName: string): Promise<Response> {
 
-        var zipFile: Response = undefined;
+        let zipFile: Response = undefined;
 
-        for (var region of this.chapters) {
-            var url = `http://dds.cr.usgs.gov/srtm/version2_1/SRTM3/${region}/${tileName}.hgt.zip`;
+        for (const region of this.chapters) {
+            const url = `http://dds.cr.usgs.gov/srtm/version2_1/SRTM3/${region}/${tileName}.hgt.zip`;
             try {
                 zipFile = await FetchCache.fetch("srtm", url);
                 break;

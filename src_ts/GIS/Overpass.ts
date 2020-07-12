@@ -61,7 +61,7 @@ http://overpass-api.de/api/interpreter/?data=[(node[amenity=parking](bbox);way[a
 import { GeoJSON, LineString, FeatureCollection, Feature, Geometry } from 'geojson';
 import { LonLatEle } from './GISUtil';
 import * as L from 'leaflet';
-import { Mutex } from '../lib/Mutex';
+import { Mutex, UnlockFct } from '../lib/Mutex';
 import { BoundingBox } from './BoundingBox';
 import { MarkerImpl } from './Marker';
 
@@ -82,12 +82,12 @@ class Overpass extends L.Layer {
 
         this.mutex = new Mutex;
         this.responses = new Map();
-        this.leafletMarkers = new Array();
+        this.leafletMarkers = [];
         this.minZoom = minZoom;
         this.icon = icon;
         this.query = query;
         this.paintNewMapFct = null;
-    };
+    }
 
 
     onRemove(map: L.Map): this {
@@ -114,7 +114,7 @@ class Overpass extends L.Layer {
 
         map.addEventListener('moveend', this.paintNewMapFct);
         return this;
-    };
+    }
 
 
 
@@ -122,13 +122,13 @@ class Overpass extends L.Layer {
 
     private paintNewMap(map: L.Map) {
         if (map.getZoom() >= this.minZoom) {
-            var boundingBox = new BoundingBox(map.getBounds().getSouthWest().lng, map.getBounds().getSouthWest().lat, map.getBounds().getNorthEast().lng, map.getBounds().getNorthEast().lat);
-            var dataPromise = this.request(boundingBox, this.query);
+            const boundingBox = new BoundingBox(map.getBounds().getSouthWest().lng, map.getBounds().getSouthWest().lat, map.getBounds().getNorthEast().lng, map.getBounds().getNorthEast().lat);
+            const dataPromise = this.request(boundingBox, this.query);
             dataPromise.then((markers: Array<MarkerImpl>) => {
                 this.deleteMarker();
                 markers.forEach((marker) => {
                     if (boundingBox.isPointIncluded(marker.getLonLatEle())) {
-                        var icon = L.icon({
+                        const icon = L.icon({
                             iconUrl: this.icon,
                             //shadowUrl: 'marker-shadow.png',
                             iconSize: [25, 41],
@@ -137,7 +137,7 @@ class Overpass extends L.Layer {
                             //shadowAnchor: [4, 62],  // the same for the shadow
                             popupAnchor: [1, -34] // point from which the popup should open relative to the iconAnchor
                         });
-                        var leafletMarker = new L.Marker({ lat: marker.getLatitude(), lng: marker.getLongitude() }, {
+                        const leafletMarker = new L.Marker({ lat: marker.getLatitude(), lng: marker.getLongitude() }, {
                             icon: icon
                         });
                         leafletMarker.bindPopup(marker.getPopup());
@@ -169,7 +169,7 @@ class Overpass extends L.Layer {
 
     private searchResponse(boundBox: BoundingBox): Array<MarkerImpl> {
 
-        var foundResponse = undefined;
+        let foundResponse = undefined;
 
         this.responses.forEach((response, bbox) => {
             if (bbox.isBoxIncluded(boundBox)) {
@@ -181,12 +181,12 @@ class Overpass extends L.Layer {
     }
 
     private json2Marker(json: any): Array<MarkerImpl> {
-        var markers = new Array<MarkerImpl>();
+        const markers = new Array<MarkerImpl>();
         json.elements.forEach((object) => {
-            var center = object.center;
+            const center = object.center;
             if (center != undefined) {
 
-                var popupString = "";
+                let popupString = "";
                 if (object.tags != undefined) {
 
                     popupString = `<b>name: </b> ${object.tags.name}<br>
@@ -208,19 +208,19 @@ class Overpass extends L.Layer {
     async request(box: BoundingBox, query: string): Promise<any> {
 
         return new Promise<any>(async (resolve, reject) => {
-            var release: Function;
+            let release: UnlockFct;
 
-            var boxString = box.southWest.longitude + "," + box.southWest.latitude + "," + box.northEast.longitude + "," + box.northEast.latitude;
-            let url = (`http://overpass-api.de/api/interpreter/?data=[out:json][timeout:25];(node[${query}](bbox);way[${query}](bbox);rel[${query}](bbox););(._;%3E;);out%20center;&bbox=${boxString}`);
+            const boxString = box.southWest.longitude + "," + box.southWest.latitude + "," + box.northEast.longitude + "," + box.northEast.latitude;
+            const url = (`http://overpass-api.de/api/interpreter/?data=[out:json][timeout:25];(node[${query}](bbox);way[${query}](bbox);rel[${query}](bbox););(._;%3E;);out%20center;&bbox=${boxString}`);
 
             try {
                 release = await this.mutex.lock();
 
-                var data = this.searchResponse(box);
+                let data = this.searchResponse(box);
 
-                if (data == undefined) {
-                    let response = await fetch(url);
-                    var json = await response.json();
+                if (data === undefined) {
+                    const response = await fetch(url);
+                    const json = await response.json();
                     if (json.elements.length > 0) {
                         data = this.json2Marker(json);
                         this.responses.set(box, data);

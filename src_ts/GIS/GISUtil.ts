@@ -21,7 +21,7 @@ class GISUtil {
     private accessToken: string;
 
 
-    constructor(accessToken: string = 'xxx') {
+    constructor(accessToken = 'xxx') {
         this.accessToken = accessToken;
     }
 
@@ -38,9 +38,9 @@ class GISUtil {
 
 
     distance(lon1: number, lat1: number, el1: number,
-        lon2: number, lat2: number, el2: number) {
+        lon2: number, lat2: number, el2: number): number {
 
-        const R: number = 6371; // Radius of the earth
+        const R = 6371; // Radius of the earth
 
         const latDistance = GISUtil.degToRadians(lat2 - lat1);
         const lonDistance = GISUtil.degToRadians(lon2 - lon1);
@@ -48,7 +48,7 @@ class GISUtil {
             + Math.cos(GISUtil.degToRadians(lat1)) * Math.cos(GISUtil.degToRadians(lat2))
             * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        var distance = R * c * 1000; // convert to meters
+        let distance = R * c * 1000; // convert to meters
 
         const height = el1 - el2;
 
@@ -58,24 +58,24 @@ class GISUtil {
     }
 
     public static degToRadians(degrees: number): number {
-        var pi = Math.PI;
+        const pi = Math.PI;
         return degrees * (pi / 180);
     }
 
 
 
-    getTailInfo(lon: number, lat: number, zoom: number): TileInfo {
+    getTileInfo(lon: number, lat: number, zoom: number): TileInfo {
         //https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#ECMAScript_.28JavaScript.2FActionScript.2C_etc..29
 
-        let longTile = Math.floor((lon + 180) / 360 * Math.pow(2, zoom));
-        let latTile = Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom));
-        let longStartTile = (longTile / Math.pow(2, zoom) * 360 - 180);
-        var n = Math.PI - 2 * Math.PI * latTile / Math.pow(2, zoom);
-        let latStartTile = 180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+        const longTile = Math.floor((lon + 180) / 360 * Math.pow(2, zoom));
+        const latTile = Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom));
+        const longStartTile = (longTile / Math.pow(2, zoom) * 360 - 180);
+        const n = Math.PI - 2 * Math.PI * latTile / Math.pow(2, zoom);
+        const latStartTile = 180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
 
-        let longStartTileNext = ((longTile + 1) / Math.pow(2, zoom) * 360 - 180);
-        var nNext = Math.PI - 2 * Math.PI * (latTile + 1) / Math.pow(2, zoom);
-        let latStartTileNext = 180 / Math.PI * Math.atan(0.5 * (Math.exp(nNext) - Math.exp(-nNext)));
+        const longStartTileNext = ((longTile + 1) / Math.pow(2, zoom) * 360 - 180);
+        const nNext = Math.PI - 2 * Math.PI * (latTile + 1) / Math.pow(2, zoom);
+        const latStartTileNext = 180 / Math.PI * Math.atan(0.5 * (Math.exp(nNext) - Math.exp(-nNext)));
 
         return {
             xTile: longTile,

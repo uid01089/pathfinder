@@ -1,6 +1,6 @@
 
 
-const xml2js = require('xml2js');
+import { Parser, Builder } from 'xml2js';
 
 import { LonLatEle } from './GISUtil';
 import { TextUtils } from '../lib/TextUtils';
@@ -114,7 +114,7 @@ class GpxFile {
                 const gpxContentPromise = TextUtils.loadText(file);
                 gpxContentPromise.then((gpxContent) => {
 
-                    const parser = new xml2js.Parser({ async: false });
+                    const parser = new Parser({ async: false });
                     parser.parseString(gpxContent, (err, result) => {
                         if (err) {
                             reject(err);
@@ -136,7 +136,7 @@ class GpxFile {
         const gpxFile = new GpxFile({});
         gpxFile.addTrks(markers);
         const gpxJson = gpxFile.getGpxJson();
-        const builder = new xml2js.Builder();
+        const builder = new Builder();
         const xml = builder.buildObject(gpxJson);
 
         TextUtils.saveText(fileName, xml);

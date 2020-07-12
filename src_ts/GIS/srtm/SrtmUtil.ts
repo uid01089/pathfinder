@@ -6,10 +6,10 @@ class SrtmUtil {
 
         // from https://github.com/rapomon/srtm-elevation/blob/master/src/tile-key.js
 
-        var sn = point.latitude < 0 ? 'S' : 'N';
-        var snNr = Util.zeroPad(Math.abs(Math.floor(point.latitude)), 2);
-        var we = point.longitude < 0 ? 'W' : 'E';
-        var weNr = Util.zeroPad(Math.abs(Math.floor(point.longitude)), 3);
+        const sn = point.latitude < 0 ? 'S' : 'N';
+        const snNr = Util.zeroPad(Math.abs(Math.floor(point.latitude)), 2);
+        const we = point.longitude < 0 ? 'W' : 'E';
+        const weNr = Util.zeroPad(Math.abs(Math.floor(point.longitude)), 3);
 
         return `${sn}${snNr}${we}${weNr}`;
     }

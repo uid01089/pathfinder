@@ -24,10 +24,10 @@ class HgtFile {
 
     async getElevation(coordinate: LonLatEle): Promise<number> {
 
-        var size = this.size - 1;
+        const size = this.size - 1;
 
-        var row = (coordinate.latitude - this.refPoint.latitude) * size;
-        var col = (coordinate.longitude - this.refPoint.longitude) * size;
+        const row = (coordinate.latitude - this.refPoint.latitude) * size;
+        const col = (coordinate.longitude - this.refPoint.longitude) * size;
 
         if (row < 0 || col < 0 || row > size || col > size) {
             throw new Error('Latitude/longitude is outside tile bounds (row=' +
@@ -42,18 +42,18 @@ class HgtFile {
 
     private getValue(row: number, col: number): number {
 
-        var offset = ((this.size - row - 1) * this.size + col);
-        var value = this.rawData[offset];
+        const offset = ((this.size - row - 1) * this.size + col);
+        const value = this.rawData[offset];
 
-        var highByte = (0xFF00 & value) >> 8;
-        var lowByte = 0x00FF & value;
+        const highByte = (0xFF00 & value) >> 8;
+        const lowByte = 0x00FF & value;
 
-        var twistedValue = (lowByte << 8) | highByte;
+        const twistedValue = (lowByte << 8) | highByte;
 
 
 
         return twistedValue;
-    };
+    }
 
     private getMeanValue(v1: number, v2: number, f: number): number {
         return v1 + (v2 - v1) * f;
@@ -61,18 +61,18 @@ class HgtFile {
 
     private bilinear(row: number, col: number): number {
 
-        var rowLow = Math.floor(row);
-        var rowHi = rowLow + 1;
-        var rowFrac = row - rowLow;
-        var colLow = Math.floor(col);
-        var colHi = colLow + 1;
-        var colFrac = col - colLow;
-        var v00 = this.getValue(rowLow, colLow);
-        var v10 = this.getValue(rowLow, colHi);
-        var v11 = this.getValue(rowHi, colHi);
-        var v01 = this.getValue(rowHi, colLow);
-        var v1 = this.getMeanValue(v00, v10, colFrac);
-        var v2 = this.getMeanValue(v01, v11, colFrac);
+        const rowLow = Math.floor(row);
+        const rowHi = rowLow + 1;
+        const rowFrac = row - rowLow;
+        const colLow = Math.floor(col);
+        const colHi = colLow + 1;
+        const colFrac = col - colLow;
+        const v00 = this.getValue(rowLow, colLow);
+        const v10 = this.getValue(rowLow, colHi);
+        const v11 = this.getValue(rowHi, colHi);
+        const v01 = this.getValue(rowHi, colLow);
+        const v1 = this.getMeanValue(v00, v10, colFrac);
+        const v2 = this.getMeanValue(v01, v11, colFrac);
 
         // console.log('row = ' + row);
         // console.log('col = ' + col);
@@ -90,7 +90,7 @@ class HgtFile {
         // console.log('v2 = ' + v2);
 
         return this.getMeanValue(v1, v2, rowFrac);
-    };
+    }
 
 
 
