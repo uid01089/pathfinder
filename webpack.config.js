@@ -1,6 +1,5 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-//const SshWebpackPlugin = require('ssh-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
@@ -36,29 +35,7 @@ module.exports = {
                 { from: './node_modules/leaflet/dist/images/*', to: '.' }
             ],
         }),
-        /*
-        new SshWebpackPlugin({
-            host: 'koserver',
-            port: '22',
-            username: 'pi',
-            privateKey: require('fs').readFileSync('/Users/konni/.ssh/id_rsa'),
-            before: 'mkdir beforeTest',
-            after: 'mkdir afterTest',
-            from: './dist',
-            to: '/var/www/html/pathfinder',
-        })
 
-        new SshWebpackPlugin({
-            host: 'ssh.strato.de',
-            port: '22',
-            username: 'skschmid.de',
-            privateKey: require('fs').readFileSync('/Users/konni/.ssh/id_rsa'),
-            before: 'mkdir beforeTest',
-            after: 'mkdir afterTest',
-            from: './dist',
-            to: './pathfinder',
-        })
-                */
     ],
     module: {
         rules: [

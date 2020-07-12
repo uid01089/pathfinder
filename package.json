@@ -7,7 +7,8 @@
     "start_webpack": "webpack-dev-server --mode development",
     "start": "electron .",
     "build": "tsc --build tsconfig.json",
-    "webpack": "webpack --mode development"
+    "webpack": "webpack --mode development",
+    "deploy_frontend": "sh ./deploy_frontend.sh"
   },
   "author": "Konrad Schmid",
   "license": "Apache-2.0 License",
@@ -15,7 +16,6 @@
     "url": "https://github.com/uid01089/pathfinder"
   },
   "dependencies": {
-    "@types/xml2js": "^0.4.5",
     "js_lib": "file:src_ts/lib",
     "js_web_comp_lib": "file:src_ts/js_web_comp_lib",
     "leaflet": "^1.5.1",
@@ -33,6 +33,7 @@
     "@typescript-eslint/parser": "^3.2.0",
     "@types/jszip": "^3.1.6",
     "@types/leaflet": "^1.5.1",
+    "@types/xml2js": "^0.4.5",
     "babel-loader": "^8.1.0",
     "clean-webpack-plugin": "^3.0.0",
     "copy-webpack-plugin": "^6.0.1",

@@ -16,7 +16,7 @@ class P3ElectronApp extends Component {
   }
 
   connectedCallback() {
-    console.log('P3ElectronApp added to page.');
+    console.log('Pathfinder added to page.');
 
   }
 
