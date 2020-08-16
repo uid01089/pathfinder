@@ -1,5 +1,5 @@
 import { LonLatEle } from '../GISUtil';
-import { Util } from '../../lib/Util';
+import { Util } from '../../js_lib/Util';
 
 class SrtmUtil {
     public static getTileName(point: LonLatEle): string {

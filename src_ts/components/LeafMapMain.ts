@@ -5,14 +5,14 @@ import { LayerStack } from '../GIS/leaflet/LayerStack';
 //import { Map, RasterDemSource, Layer, RasterSource, Marker, GeoJSONSource } from 'mapbox-gl';
 import * as L from 'leaflet';
 import { GeoJSON, LineString, FeatureCollection, Feature, Geometry } from 'geojson';
-import '../lib/components/HanburgerMenuAutoHide';
-import '../lib/components/HamburgerMenuTree';
-import { ContextEventResult } from '../lib/components/HanburgerMenuAutoHide';
-import '../lib/components/ContextMenuProgrammatical';
-import { ContextMenuProgrammatical } from '../lib/components/ContextMenuProgrammatical';
-import '../lib/components/MidiWindow';
+import '../js_lib/components/HanburgerMenuAutoHide';
+import '../js_lib/components/HamburgerMenuTree';
+import { ContextEventResult } from '../js_lib/components/HanburgerMenuAutoHide';
+import '../js_lib/components/ContextMenuProgrammatical';
+import { ContextMenuProgrammatical } from '../js_lib/components/ContextMenuProgrammatical';
+import '../js_lib/components/MidiWindow';
 import { MAP_MAIN_COMPLETE_DIRECTIONS, MAP_MAIN_SET_CENTER, MAP_MAIN_DELETE_ALL_MARKERS, RedMapMain, MAP_MAIN_OPEN_GPX_FILE, MAP_MAIN_SAVE_GPX_FILE, MAP_MAIN_SET_DIRECTIONS, MAP_MAIN_ADD_MARKER, MAP_MAIN_DELETE_MARKER, MAP_MAIN_CHANGE_MARKER } from '../reducers/RedMapMain';
-import { reduxStoreInstance } from '../ReduxStore';
+import { reduxStoreInstance, State } from '../ReduxStore';
 import { DirectionsImpl } from '../GIS/Directions';
 import { FeatureCollectionImpl } from '../GIS/FeatureCollection'
 import './TrailProfil';
@@ -20,11 +20,11 @@ import { GISUtil } from '../GIS/GISUtil';
 import { CachedTileLayer } from '../GIS/leaflet/CachedTileLayer';
 import { Overpass } from '../GIS/Overpass';
 import { IMarker } from '../GIS/Marker';
-import { FileDialog, FileDialogResult } from '../lib/components/FileDialog'
-import '../lib/components/FileDialog';
+import { FileDialog, FileDialogResult } from '../js_lib/components/FileDialog'
+import '../js_lib/components/FileDialog';
 import * as GEO from 'leaflet-control-geocoder';
 import { LeafletCss } from './Leaflet.css';
-import { MidiWindow } from '../lib/components/MidiWindow';
+import { MidiWindow } from '../js_lib/components/MidiWindow';
 import { Landscape3d } from './Landscape3d';
 import './Landscape3d';
 
@@ -32,11 +32,13 @@ import './Landscape3d';
 
 
 import { BoundingBox } from '../GIS/BoundingBox';
-import { HamburgerMenuTree } from '../lib/components/HamburgerMenuTree';
-import { CT_Config, CT_Button, CT_Selection, CT_Switch, ContextMenuTreeEventResult } from '../lib/components/ContextMenuTree';
+import { HamburgerMenuTree } from '../js_lib/components/HamburgerMenuTree';
+import { CT_Config, CT_Button, CT_Selection, CT_Switch, ContextMenuTreeEventResult } from '../js_lib/components/ContextMenuTree';
 
 
 import './Impressum';
+import { ReduxComponent } from '../js_web_comp_lib/ReduxComponent';
+import { AbstractReduxStore } from '../js_web_comp_lib/AbstractReduxStore';
 
 
 
@@ -48,14 +50,13 @@ const ACCESS_TOKEN = 'pk.eyJ1IjoidWlkMDEwODkiLCJhIjoiY2p6M295MGs2MDVkMDNwb2N5MHl
 
 
 
-class LeafMapMain extends Component {
+class LeafMapMain extends ReduxComponent<State> {
 
 
 
 	markers: Array<Marker>;
 	map: Map;
-	_reducer: RedMapMain;
-	reduxListenerUnsubsribe: Function;
+	reducer: RedMapMain;
 	private mapBoxUtil: GISUtil;
 	geoJsonLayer: L.GeoJSON<any>;
 	waymarkedtrailsHiking: TileLayer;
@@ -83,12 +84,12 @@ class LeafMapMain extends Component {
 	googleHybMap: CachedTileLayer;
 
 	constructor() {
-		super();
+
+		const reducer = new RedMapMain();
+		super(reducer, reduxStoreInstance);
+		this.reducer = reducer;
 
 		this.markers = [];
-		this._reducer = new RedMapMain();
-		reduxStoreInstance.registerReducer(this._reducer);
-		this.reduxListenerUnsubsribe = reduxStoreInstance.subscribe(() => this.reduxtrigger(reduxStoreInstance));
 		this.mapBoxUtil = new GISUtil(ACCESS_TOKEN);
 
 		L.Icon.Default.imagePath = 'node_modules/leaflet/dist/images/';
@@ -319,12 +320,12 @@ class LeafMapMain extends Component {
 
 			marker.on('dragend', (e) => {
 				//this.retrieveRoute();
-				this._reducer.changeMarker(this.markers.indexOf(marker), { lonLatEle: { longitude: marker.getLatLng().lng, latitude: marker.getLatLng().lat } } as IMarker, this.map.getZoom());
+				this.reducer.changeMarker(this.markers.indexOf(marker), { lonLatEle: { longitude: marker.getLatLng().lng, latitude: marker.getLatLng().lat } } as IMarker, this.map.getZoom());
 			});
 
 			// Add it to the marker collection
 			this.markers.push(marker);
-			this._reducer.addMarker({ lonLatEle: { longitude: marker.getLatLng().lng, latitude: marker.getLatLng().lat } } as IMarker, this.map.getZoom());
+			this.reducer.addMarker({ lonLatEle: { longitude: marker.getLatLng().lng, latitude: marker.getLatLng().lat } } as IMarker, this.map.getZoom());
 
 
 			marker.addTo(this.map);
@@ -458,7 +459,7 @@ class LeafMapMain extends Component {
 					{
 						const fileDialog = this.shadowRoot.getElementById("OpenGpxFileDialog") as FileDialog;
 						fileDialog.show((files) => {
-							this._reducer.openGpxFile(files, this.map.getZoom());
+							this.reducer.openGpxFile(files, this.map.getZoom());
 						});
 					}
 
@@ -471,7 +472,7 @@ class LeafMapMain extends Component {
 							this.markers.forEach((marker) => {
 								iMarkers.push({ lonLatEle: { latitude: marker.getLatLng().lat, longitude: marker.getLatLng().lng, elevation: marker.getLatLng().alt } });
 							})
-							this._reducer.saveGpxFile(fileName, iMarkers);
+							this.reducer.saveGpxFile(fileName, iMarkers);
 
 						}
 
@@ -481,10 +482,10 @@ class LeafMapMain extends Component {
 
 					break;
 				case '/Routing/Delete all markers':
-					this._reducer.delAllMarkers(this.map.getZoom());
+					this.reducer.delAllMarkers(this.map.getZoom());
 					break;
 				case '/Routing/Automatic routing':
-					this._reducer.toggleAutoRoute(details.value as boolean, this.map.getZoom());
+					this.reducer.toggleAutoRoute(details.value as boolean, this.map.getZoom());
 					break;
 				case '/Layers/waymarkedtrails/Hiking tracks':
 					this.layerStack.showLayer(this.waymarkedtrailsHiking, details.value as boolean);
@@ -637,7 +638,7 @@ class LeafMapMain extends Component {
 						const marker: Marker = details.ident;
 
 						const index = this.markers.indexOf(details.ident);
-						this._reducer.deleteMarker(index, { lonLatEle: { longitude: marker.getLatLng().lng, latitude: marker.getLatLng().lat } } as IMarker, this.map.getZoom());
+						this.reducer.deleteMarker(index, { lonLatEle: { longitude: marker.getLatLng().lng, latitude: marker.getLatLng().lat } } as IMarker, this.map.getZoom());
 
 
 						if (index > -1) {
@@ -714,13 +715,15 @@ class LeafMapMain extends Component {
 	}
 
 
-	reduxtrigger(storeInstance): void {
+	/**
+	  * This operation is called by Redux
+	  * @param reduxStore 
+	  */
+	triggeredFromRedux(reduxStore: AbstractReduxStore<State>): void {
 
-		if (!this.isConnected) {
-			this.reduxListenerUnsubsribe();
-		}
+		super.triggeredFromRedux(reduxStore);
 
-		switch (storeInstance.getState().action) {
+		switch (reduxStore.getState().action) {
 
 			case MAP_MAIN_OPEN_GPX_FILE:
 				console.log("- open gpx");
@@ -737,7 +740,7 @@ class LeafMapMain extends Component {
 			case MAP_MAIN_SET_DIRECTIONS:
 				{
 					console.log("- set directions");
-					const directions: DirectionsImpl = storeInstance.getState().directions;
+					const directions: DirectionsImpl = reduxStore.getState().directions;
 					// then update the map
 					this.geoJsonLayer.clearLayers();
 					this.geoJsonLayer.addData(FeatureCollectionImpl.getFeatureCollection(directions));
@@ -772,7 +775,7 @@ class LeafMapMain extends Component {
 				break;
 			case MAP_MAIN_SET_CENTER:
 				console.log("- set center");
-				this.map.flyTo([storeInstance.getState().center[1], storeInstance.getState().center[0]], 9);
+				this.map.flyTo([reduxStore.getState().center[1], reduxStore.getState().center[0]], 9);
 
 				break;
 

@@ -61,7 +61,7 @@ http://overpass-api.de/api/interpreter/?data=[(node[amenity=parking](bbox);way[a
 import { GeoJSON, LineString, FeatureCollection, Feature, Geometry } from 'geojson';
 import { LonLatEle } from './GISUtil';
 import * as L from 'leaflet';
-import { Mutex, UnlockFct } from '../lib/Mutex';
+import { Mutex, UnlockFct } from '../js_lib/Mutex';
 import { BoundingBox } from './BoundingBox';
 import { MarkerImpl } from './Marker';
 

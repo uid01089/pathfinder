@@ -2,7 +2,7 @@ import { SrtmDownloader } from "./SrtmDownloader";
 import { HgtFile } from './HgtFile';
 import { LonLatEle } from '../GISUtil';
 import { SrtmUtil } from './SrtmUtil';
-import { FetchCache } from '../../lib/FetchCache';
+import { FetchCache } from '../../js_lib/FetchCache';
 import * as JSZip from 'jszip';
 import { SrtmDownloaderBase } from "./SrtmDownloaderBase";
 

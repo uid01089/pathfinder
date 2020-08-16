@@ -1,8 +1,8 @@
 import { BoundingBox } from './BoundingBox';
 import { GISUtil, TileInfo, LonLatEle } from './GISUtil';
-import { PictureUtil } from '../lib/PictureUtil';
+import { PictureUtil } from '../js_lib/PictureUtil';
 import { FeatureCollection, LineString, Position, Feature } from 'geojson';
-import { Mutex, UnlockFct } from '../lib/Mutex';
+import { Mutex, UnlockFct } from '../js_lib/Mutex';
 import { LayerStack } from './leaflet/LayerStack';
 
 interface Point {

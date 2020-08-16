@@ -4,6 +4,7 @@ import { AbstractReduxStore } from './js_web_comp_lib/AbstractReduxStore';
 import { DirectionsImpl } from './GIS/Directions';
 import { LonLatEle } from './GIS/GISUtil';
 import { IMarker } from './GIS/Marker';
+import { Action } from './js_web_comp_lib/AbstractReducer';
 
 
 interface State {
@@ -37,6 +38,9 @@ const initiateState: State = {
 }
 
 class ReduxStore extends AbstractReduxStore<State> {
+    finalReducer(state: State, action: Action<any>): void {
+        // Do nothing
+    }
 
     static instance: ReduxStore;
 

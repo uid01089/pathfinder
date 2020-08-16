@@ -1,9 +1,9 @@
 import { LonLatEle } from './GISUtil';
 import { GISUtil, TileInfo } from './GISUtil';
-import { PictureUtil } from '../lib/PictureUtil';
+import { PictureUtil } from '../js_lib/PictureUtil';
 import { ElevationProvider } from './ElevationProvider';
-import { Util } from '../lib/Util';
-import { Pixel, Picture } from '../lib/Picture';
+import { Util } from '../js_lib/Util';
+import { Pixel, Picture } from '../js_lib/Picture';
 
 
 

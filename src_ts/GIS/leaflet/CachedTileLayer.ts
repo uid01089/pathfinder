@@ -1,5 +1,5 @@
 import { TileLayer, Coords, DoneCallback } from 'leaflet';
-import { FetchCache } from '../../lib/FetchCache';
+import { FetchCache } from '../../js_lib/FetchCache';
 
 const CACHE_NAME = "BuildUtil";
 

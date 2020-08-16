@@ -1,9 +1,8 @@
 import { ReduxComponent } from '../js_web_comp_lib/ReduxComponent';
-import { Action } from 'redux';
 import { reduxStoreInstance, State } from '../ReduxStore';
 import { CSS } from '../Css';
 import { AbstractReduxStore } from '../js_web_comp_lib/AbstractReduxStore';
-import { AbstractReducer } from '../js_web_comp_lib/AbstractReducer';
+import { AbstractReducer, Action } from '../js_web_comp_lib/AbstractReducer';
 
 import * as THREE from 'three';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
@@ -14,12 +13,12 @@ import { WebGLRenderer, WebGLRendererParameters } from 'three';
 import { Elevation } from '../GIS/Elevation';
 import { CanvasMap } from '../GIS/CanvasMap';
 import { FeatureCollection, LineString } from 'geojson';
-import { HamburgerMenuTree } from '../lib/components/HamburgerMenuTree';
-import '../lib/components/HamburgerMenuTree';
-import { CT_Config, ContextMenuTreeEventResult, CT_Selection, CT_Switch } from '../lib/components/ContextMenuTree';
-import '../lib/components/Loader';
+import { HamburgerMenuTree } from '../js_lib/components/HamburgerMenuTree';
+import '../js_lib/components/HamburgerMenuTree';
+import { CT_Config, ContextMenuTreeEventResult, CT_Selection, CT_Switch } from '../js_lib/components/ContextMenuTree';
+import '../js_lib/components/Loader';
 import { LayerStack } from '../GIS/leaflet/LayerStack';
-import { MidiWindowEventResult } from '../lib/components/MidiWindow';
+import { MidiWindowEventResult } from '../js_lib/components/MidiWindow';
 
 
 
@@ -56,10 +55,15 @@ class Landscape3d extends ReduxComponent<State> {
     featureCollection: any;
     zoom: number;
     layerStack: LayerStack<string>;
+    reducer: Landscape3dReducer;
 
 
     constructor() {
-        super(new Landscape3dReducer(), reduxStoreInstance);
+        const reducer = new Landscape3dReducer();
+        super(reducer, reduxStoreInstance);
+        this.reducer = reducer;
+
+
 
     }
 

@@ -1,9 +1,8 @@
 import { ReduxComponent } from '../js_web_comp_lib/ReduxComponent';
-import { Action } from 'redux';
 import { reduxStoreInstance, State } from '../ReduxStore';
 import { CSS } from '../Css';
 import { AbstractReduxStore } from '../js_web_comp_lib/AbstractReduxStore';
-import { AbstractReducer } from '../js_web_comp_lib/AbstractReducer';
+import { AbstractReducer, Action } from '../js_web_comp_lib/AbstractReducer';
 
 import * as THREE from 'three';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
@@ -43,10 +42,16 @@ class Landscape3dSphere extends ReduxComponent<State> {
     controls: OrbitControls;
     scene: THREE.Scene;
     layerStack: LayerStack<string>;
+    reducer: Landscape3dSphereReducer;
 
 
     constructor() {
-        super(new Landscape3dSphereReducer(), reduxStoreInstance);
+
+        const reducer = new Landscape3dSphereReducer();
+        super(reducer, reduxStoreInstance);
+        this.reducer = reducer;
+
+
 
 
 

@@ -3,7 +3,7 @@
 import { Parser, Builder } from 'xml2js';
 
 import { LonLatEle } from './GISUtil';
-import { TextUtils } from '../lib/TextUtils';
+import { TextUtils } from '../js_lib/TextUtils';
 import { IMarker } from './Marker';
 
 

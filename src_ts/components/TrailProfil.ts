@@ -1,13 +1,24 @@
 import { Component } from '../js_web_comp_lib/Component';
 import { CSS } from '../Css';
-import { RedTrailProfil } from '../reducers/RedTrailProfil';
-import { reduxStoreInstance } from '../ReduxStore';
-import { LineChart, DataElement, LineChartSerie, ChartDataLine } from '../lib/components/charts/LineChart';
+import { reduxStoreInstance, State } from '../ReduxStore';
+import { LineChart, DataElement, LineChartSerie, ChartDataLine } from '../js_lib/components/charts/LineChart';
 import { MAP_MAIN_COMPLETE_DIRECTIONS, MAP_MAIN_DELETE_ALL_MARKERS } from '../reducers/RedMapMain';
 import { DirectionsImpl } from '../GIS/Directions';
-import { Util } from '../lib/Util';
-import { MidiWindowEventResult } from '../lib/components/MidiWindow';
+import { Util } from '../js_lib/Util';
+import { MidiWindowEventResult } from '../js_lib/components/MidiWindow';
+import { AbstractReducer, Action } from '../js_web_comp_lib/AbstractReducer';
+import { AbstractReduxStore } from '../js_web_comp_lib/AbstractReduxStore';
 
+
+class RedTrailProfil extends AbstractReducer<State> {
+    constructor() {
+        super(reduxStoreInstance);
+    }
+    reducer(state: State, action: Action): State {
+
+        return state;
+    }
+}
 
 
 
@@ -16,15 +27,14 @@ import { MidiWindowEventResult } from '../lib/components/MidiWindow';
 class TrailProfil extends LineChart {
 
 
-    _reducer: RedTrailProfil;
-    reduxListenerUnsubsribe: Function;
+    reducer: RedTrailProfil;
+
 
     constructor() {
-        super();
+        const reducer = new RedTrailProfil();
+        super(reducer, reduxStoreInstance);
+        this.reducer = reducer;
 
-        this._reducer = new RedTrailProfil();
-        reduxStoreInstance.registerReducer(this._reducer);
-        this.reduxListenerUnsubsribe = reduxStoreInstance.subscribe(() => this.reduxtrigger(reduxStoreInstance));
 
         // Make that values on x-achse are shown with 2 digits
         this.setLabelInterpolationFct((value: number) => { return Util.round(value, 100) });
@@ -59,10 +69,13 @@ class TrailProfil extends LineChart {
         return html;
     }
 
-    reduxtrigger(reduxStoreInstance): void {
-        if (!this.isConnected) {
-            this.reduxListenerUnsubsribe();
-        }
+    /**
+     * This operation is called by Redux
+     * @param reduxStore 
+     */
+    triggeredFromRedux(reduxStore: AbstractReduxStore<State>): void {
+
+        super.triggeredFromRedux(reduxStore);
 
         const chartData: ChartDataLine = {
             series: [{
@@ -71,13 +84,13 @@ class TrailProfil extends LineChart {
             }] as LineChartSerie[]
         };
 
-        switch (reduxStoreInstance.getState().action) {
+        switch (reduxStore.getState().action) {
 
             case MAP_MAIN_COMPLETE_DIRECTIONS:
                 {
                     console.log("+ complete direction");
 
-                    const direction: DirectionsImpl = reduxStoreInstance.getState().directions;
+                    const direction: DirectionsImpl = reduxStore.getState().directions;
 
                     let distance = 0;
                     direction.getCoordinates().forEach((coordinate) => {

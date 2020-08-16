@@ -1,9 +1,8 @@
 import { ReduxComponent } from '../js_web_comp_lib/ReduxComponent';
-import { Action } from 'redux';
 import { reduxStoreInstance, State } from '../ReduxStore';
 import { CSS } from '../Css';
 import { AbstractReduxStore } from '../js_web_comp_lib/AbstractReduxStore';
-import { AbstractReducer } from '../js_web_comp_lib/AbstractReducer';
+import { AbstractReducer, Action } from '../js_web_comp_lib/AbstractReducer';
 
 class ImpressumReducer extends AbstractReducer<State> {
     constructor() {
@@ -21,7 +20,7 @@ class ImpressumElement extends ReduxComponent<State> {
 
     constructor() {
         const reducer = new ImpressumReducer();
-        super(new ImpressumReducer(), reduxStoreInstance);
+        super(reducer, reduxStoreInstance);
         this.reducer = reducer;
 
     }

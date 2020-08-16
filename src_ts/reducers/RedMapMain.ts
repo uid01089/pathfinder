@@ -1,5 +1,4 @@
-import { AbstractReducer } from '../js_web_comp_lib/AbstractReducer';
-import { Action, ActionCreatorsMapObject } from 'redux';
+import { AbstractReducer, Action } from '../js_web_comp_lib/AbstractReducer';
 import { State, reduxStoreInstance } from '../ReduxStore';
 import { DirectionsImpl } from '../GIS/Directions';
 import { GISUtil } from '../GIS/GISUtil';
@@ -7,7 +6,7 @@ import { GpxFile, LonLatEle, Track } from '../GIS/GpxFile';
 import { Elevation } from '../GIS/Elevation';
 import { IMarker } from '../GIS/Marker';
 import { BoxZoomHandler } from 'mapbox-gl';
-import { Util } from '../lib/Util';
+import { Util } from '../js_lib/Util';
 
 
 
@@ -272,7 +271,7 @@ class RedMapMain extends AbstractReducer<State> {
             files: files,
             zoom: zoom,
         }
-        this.store.dispatch(action);
+        this.store.dispatchAction(action);
 
 
 
@@ -285,7 +284,7 @@ class RedMapMain extends AbstractReducer<State> {
             fileName: file,
             markers: markers
         }
-        this.store.dispatch(action);
+        this.store.dispatchAction(action);
     }
 
 
@@ -295,7 +294,7 @@ class RedMapMain extends AbstractReducer<State> {
             marker: markerToBeAdded,
             zoom: zoom
         }
-        this.store.dispatch(action);
+        this.store.dispatchAction(action);
     }
 
     changeMarker(index: number, marker: IMarker, zoom: number): void {
@@ -305,7 +304,7 @@ class RedMapMain extends AbstractReducer<State> {
             index: index,
             zoom: zoom
         }
-        this.store.dispatch(action);
+        this.store.dispatchAction(action);
     }
 
     deleteMarker(index: number, markerToBeDeleted: IMarker, zoom: number): void {
@@ -315,11 +314,11 @@ class RedMapMain extends AbstractReducer<State> {
             index: index,
             zoom: zoom
         }
-        this.store.dispatch(action);
+        this.store.dispatchAction(action);
     }
 
     setDirectionsByTrack(track: Track, zoom: number): void {
-        const actionFct = (dispatch) => {
+        const actionFct = async (dispatch) => {
             const directionsPromise = DirectionsImpl.getDirectionsFromTrack(track);
             directionsPromise.then(
                 (directions: DirectionsImpl) => dispatch({
@@ -341,7 +340,7 @@ class RedMapMain extends AbstractReducer<State> {
     }
 
     completeDirections(directions: DirectionsImpl, accessToken: string, doEvelationCalculation = true, zoom: number): void {
-        const actionFct = (dispatch) => {
+        const actionFct = async (dispatch) => {
             const directionsCompletedPromise = directions.complete(accessToken, doEvelationCalculation, zoom);
 
             directionsCompletedPromise.then((directionsCompleted) => {
@@ -359,7 +358,7 @@ class RedMapMain extends AbstractReducer<State> {
 
     setDirectionsByMarkers(markers: IMarker[], autoRouting: boolean, accessToken: string, zoom: number): void {
 
-        const actionFct = (dispatch) => {
+        const actionFct = async (dispatch) => {
             if (markers.length > 1) {
 
                 let directionsPromise: Promise<DirectionsImpl>;
@@ -399,7 +398,7 @@ class RedMapMain extends AbstractReducer<State> {
     }
 
     delAllMarkers(zoom: number): void {
-        const actionFct = (dispatch) => {
+        const actionFct = async (dispatch) => {
             const action: ActionDeleteAllMarkers = {
                 type: MAP_MAIN_DELETE_ALL_MARKERS,
                 zoom: zoom
@@ -412,7 +411,7 @@ class RedMapMain extends AbstractReducer<State> {
     }
 
     setCenter(center: LonLatEle): void {
-        const actionFct = (dispatch) => {
+        const actionFct = async (dispatch) => {
             const action: ActionSetCenter = {
                 type: MAP_MAIN_SET_CENTER,
                 center: center
@@ -430,7 +429,7 @@ class RedMapMain extends AbstractReducer<State> {
             state: state,
             zoom: zoom,
         };
-        this.store.dispatch(action);
+        this.store.dispatchAction(action);
     }
 
 
